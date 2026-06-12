@@ -313,7 +313,6 @@ function renderResults(data) {
   if (activeFilter === 'aceptada') filtered = filtered.filter(r => r.estado === 'aceptada');
   else if (activeFilter === 'revisar') filtered = filtered.filter(r => r.estado === 'revisar');
   else if (activeFilter === 'rechazada') filtered = filtered.filter(r => r.estado === 'rechazada');
-  // 'todas' muestra todo - no filter needed
 
   currentFiltered = filtered;
   document.getElementById('sectionText').textContent = filtered.length + ' licitacion' + (filtered.length !== 1 ? 'es' : '') + ' encontrada' + (filtered.length !== 1 ? 's' : '');
@@ -323,57 +322,61 @@ function renderResults(data) {
     return;
   }
 
-  const html = filtered.map((r, i) => {
+  const tipoIcons = { publica: 'ti-building-government', privada: 'ti-building', concurso: 'ti-clipboard-list' };
+  const tipoLabels = { publica: 'Licitación pública', privada: 'Licitación privada', concurso: 'Concurso' };
+
+  document.getElementById('results').innerHTML = filtered.map((r, i) => {
     const isNew = !r.notificado;
     const icon = tipoIcons[r.tipo] || 'ti-file-text';
     const gratis = esPliegoGratis(r.costo_pliego);
     const pliegoClass = gratis ? 'pliego-gratis' : 'pliego-pago';
     const pliegoText = r.costo_pliego || 'Pliego gratuito';
     const pliegoDetailClass = gratis ? 'pliego-gratis-text' : 'pliego-pago-text';
-
-    return '<div class="tile" id="tile-' + i + '" onclick="toggle(' + i + ')">' +
-      '<i class="ti ti-chevron-down tile-chevron" aria-hidden="true"></i>' +
-      '<div class="tile-content">' +
-        '<div class="tile-badges">' +
-          '<span class="badge badge-' + r.tipo + '">' + (tipoLabels[r.tipo] || r.tipo) + '</span>' +
-          (isNew ? '<span class="badge badge-new">Nueva</span>' : '') +
-        '</div>' +
-        '<div class="tile-title">' + r.titulo + '</div>' +
-        '<div class="tile-org">' + r.organismo + '</div>' +
-      '</div>' +
-      '<div class="tile-estado-btns" onclick="event.stopPropagation()">' +
-        '<button class="estado-btn aceptada' + (r.estado === "aceptada" ? " active" : "") + '" onclick="setEstado(event,' + i + ',&quot;aceptada&quot;)" title="Me interesa">' + SVG_CHECK + '</button>' +
-        '<button class="estado-btn revisar' + (r.estado === "revisar" ? " active" : "") + '" onclick="setEstado(event,' + i + ',&quot;revisar&quot;)" title="Revisar después">' + SVG_EYE + '</button>' +
-        '<button class="estado-btn rechazada' + (r.estado === "rechazada" ? " active" : "") + '" onclick="setEstado(event,' + i + ',&quot;rechazada&quot;)" title="No me interesa">' + SVG_X + '</button>' +
-      '</div>' +
-      '<div class="tile-footer">' +
-        '<div class="tile-meta-col">' +
-          (r.fecha_apertura ? '<div class="tile-meta"><i class="ti ti-calendar" aria-hidden="true"></i>' + r.fecha_apertura + '</div>' : '') +
-          (r.presupuesto ? '<div class="tile-meta"><i class="ti ti-currency-dollar" aria-hidden="true"></i>' + r.presupuesto + '</div>' : '') +
-          '<div class="tile-meta ' + pliegoClass + '"><i class="ti ti-receipt" aria-hidden="true"></i>' + pliegoText + '</div>' +
-        '</div>' +
-        '<i class="ti ' + icon + ' tile-icon" aria-hidden="true"></i>' +
-      '</div>' +
-      '<div class="tile-detail">' +
-        '<div class="detail-inner">' +
-          '<div class="detail-grid">' +
-            '<div class="detail-field"><label>Objeto</label><span>' + (r.objeto || '—') + '</span></div>' +
-            '<div class="detail-field"><label>Publicación</label><span>' + (r.fecha_publicacion || 'No informada') + '</span></div>' +
-            '<div class="detail-field"><label>Presupuesto oficial</label><span>' + (r.presupuesto || 'No declarado') + '</span></div>' +
-            '<div class="detail-field"><label>Costo del pliego</label><span class="' + pliegoDetailClass + '">' + (r.costo_pliego || 'Gratuito') + '</span></div>' +
-          '</div>' +
-          '<div class="insight-box"><label>Por qué te puede interesar</label><p>' + r.resumen + '</p></div>' +
-        '</div>' +
-        '<div class="tile-actions">' +
-          '<a class="btn-sm" href="' + r.url + '" target="_blank" onclick="event.stopPropagation()">' +
-            '<i class="ti ti-external-link" aria-hidden="true"></i> Ver en ' + r.fuente +
-          '</a>' +
-        '</div>' +
-      '</div>' +
-    '</div>';
+    const estadoAceptada = r.estado === 'aceptada' ? ' active' : '';
+    const estadoRevisar = r.estado === 'revisar' ? ' active' : '';
+    const estadoRechazada = r.estado === 'rechazada' ? ' active' : '';
+    return `
+      <div class="tile" id="tile-${i}" onclick="toggle(${i})">
+        <i class="ti ti-chevron-down tile-chevron" aria-hidden="true"></i>
+        <div class="tile-content">
+          <div class="tile-badges">
+            <span class="badge badge-${r.tipo}">${tipoLabels[r.tipo] || r.tipo}</span>
+            ${isNew ? '<span class="badge badge-new">Nueva</span>' : ''}
+          </div>
+          <div class="tile-title">${r.titulo}</div>
+          <div class="tile-org">${r.organismo}</div>
+        </div>
+        <div class="tile-estado-btns" onclick="event.stopPropagation()">
+          <button class="estado-btn aceptada${estadoAceptada}" onclick="setEstado(event,${i},'aceptada')" title="Me interesa">${SVG_CHECK}</button>
+          <button class="estado-btn revisar${estadoRevisar}" onclick="setEstado(event,${i},'revisar')" title="Revisar después">${SVG_EYE}</button>
+          <button class="estado-btn rechazada${estadoRechazada}" onclick="setEstado(event,${i},'rechazada')" title="No me interesa">${SVG_X}</button>
+        </div>
+        <div class="tile-footer">
+          <div class="tile-meta-col">
+            ${r.fecha_apertura ? `<div class="tile-meta"><i class="ti ti-calendar" aria-hidden="true"></i>${r.fecha_apertura}</div>` : ''}
+            ${r.presupuesto ? `<div class="tile-meta"><i class="ti ti-currency-dollar" aria-hidden="true"></i>${r.presupuesto}</div>` : ''}
+            <div class="tile-meta ${pliegoClass}"><i class="ti ti-receipt" aria-hidden="true"></i>${pliegoText}</div>
+          </div>
+          <i class="ti ${icon} tile-icon" aria-hidden="true"></i>
+        </div>
+        <div class="tile-detail">
+          <div class="detail-inner">
+            <div class="detail-grid">
+              <div class="detail-field"><label>Objeto</label><span>${r.objeto || '—'}</span></div>
+              <div class="detail-field"><label>Publicación</label><span>${r.fecha_publicacion || 'No informada'}</span></div>
+              <div class="detail-field"><label>Presupuesto oficial</label><span>${r.presupuesto || 'No declarado'}</span></div>
+              <div class="detail-field"><label>Costo del pliego</label><span class="${pliegoDetailClass}">${r.costo_pliego || 'Gratuito'}</span></div>
+            </div>
+            <div class="insight-box"><label>Por qué te puede interesar</label><p>${r.resumen}</p></div>
+          </div>
+          <div class="tile-actions">
+            <a class="btn-sm" href="${r.url}" target="_blank" onclick="event.stopPropagation()">
+              <i class="ti ti-external-link" aria-hidden="true"></i> Ver en ${r.fuente}
+            </a>
+          </div>
+        </div>
+      </div>`;
   }).join('');
-
-  document.getElementById('results').innerHTML = html;
 }
 
 async function setEstado(event, i, nuevoEstado) {
