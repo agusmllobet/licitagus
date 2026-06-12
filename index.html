@@ -232,8 +232,7 @@ const SVG_X = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></li
 
 async function cargarDesdeDB() {
   const { data, error } = await db.from('licitaciones').select('*').order('created_at', { ascending: false }).limit(100);
-  console.log('cargarDesdeDB:', data?.length, 'error:', error);
-  if (error) { console.error('DB error:', error); return []; }
+  if (error) return [];
   return data || [];
 }
 
@@ -279,7 +278,6 @@ async function cargarYBuscar() {
   const btn = document.getElementById('btnRefresh');
   btn.disabled = true;
   allData = await cargarDesdeDB();
-  console.log('allData length:', allData.length);
   await cargarStats();
   if (allData.length === 0) { await buscarNuevas(); }
   else {
@@ -344,9 +342,9 @@ function renderResults(data) {
         '<div class="tile-org">' + r.organismo + '</div>' +
       '</div>' +
       '<div class="tile-estado-btns" onclick="event.stopPropagation()">' +
-        '<button class="estado-btn aceptada' + (r.estado === 'aceptada' ? ' active' : '') + '" onclick="setEstado(event,' + i + ','aceptada')" title="Me interesa">' + SVG_CHECK + '</button>' +
-        '<button class="estado-btn revisar' + (r.estado === 'revisar' ? ' active' : '') + '" onclick="setEstado(event,' + i + ','revisar')" title="Revisar después">' + SVG_EYE + '</button>' +
-        '<button class="estado-btn rechazada' + (r.estado === 'rechazada' ? ' active' : '') + '" onclick="setEstado(event,' + i + ','rechazada')" title="No me interesa">' + SVG_X + '</button>' +
+        '<button class="estado-btn aceptada' + (r.estado === "aceptada" ? " active" : "") + '" onclick="setEstado(event,' + i + ',&quot;aceptada&quot;)" title="Me interesa">' + SVG_CHECK + '</button>' +
+        '<button class="estado-btn revisar' + (r.estado === "revisar" ? " active" : "") + '" onclick="setEstado(event,' + i + ',&quot;revisar&quot;)" title="Revisar después">' + SVG_EYE + '</button>' +
+        '<button class="estado-btn rechazada' + (r.estado === "rechazada" ? " active" : "") + '" onclick="setEstado(event,' + i + ',&quot;rechazada&quot;)" title="No me interesa">' + SVG_X + '</button>' +
       '</div>' +
       '<div class="tile-footer">' +
         '<div class="tile-meta-col">' +
