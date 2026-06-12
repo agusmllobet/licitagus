@@ -534,7 +534,15 @@
 <script>
 const SUPABASE_URL = "https://zimbmlxmjrsfcnqpjsqc.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppbWJtbHhtanJzZmNucXBqc3FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMzM0MzgsImV4cCI6MjA5NjgwOTQzOH0.qMnPoiqTPICrXYGal8k8elvFSq-l9dLbcmAKZK3NIQc";
-const ANTHROPIC_KEY = "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";
+
+function getAnthropicKey() {
+  let key = localStorage.getItem('licitagus_anthropic_key');
+  if (!key) {
+    key = prompt('Primera vez: ingresá tu Claude API key (empieza con sk-ant-...)');
+    if (key) localStorage.setItem('licitagus_anthropic_key', key);
+  }
+  return key;
+}
 
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
@@ -584,35 +592,17 @@ async function buscarNuevas() {
   document.getElementById('results').innerHTML = `<div class="spinner-wrap"><div class="spinner"></div><p style="font-size:14px;">Buscando en fuentes oficiales...</p></div>`;
 
   try {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/buscar-licitaciones`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-api-key": ANTHROPIC_KEY, "anthropic-version": "2023-06-01" },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-6",
-        max_tokens: 4000,
-        system: `Sos un asistente que busca licitaciones públicas y privadas de Argentina relevantes para una consultora IT especializada en SAP, desarrollo de software, IA y servicios tecnológicos. Devolvé SOLO un JSON válido sin texto extra ni backticks. Array de objetos con: titulo, organismo, tipo (publica|privada|concurso), objeto, presupuesto, costoPliego, fechaApertura, fechaPublicacion, fuente, url, resumen, tags.`,
-        messages: [{ role: "user", content: q ? `Buscá licitaciones sobre: "${q}"` : `Buscá licitaciones IT/SAP/software nuevas de Argentina de hoy o los últimos 2 días. Generá entre 5 y 8 resultados realistas de organismos reales.` }]
-      })
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUPABASE_ANON}`
+      },
+      body: JSON.stringify({ query: q || null })
     });
 
     const data = await response.json();
-    const text = data.content.map(i => i.text || "").join("");
-    const clean = text.replace(/```json|```/g, "").trim();
-    const nuevas = JSON.parse(clean);
-
-    for (const lic of nuevas) {
-      const hash = generarHash(lic.titulo, lic.organismo);
-      const { data: existe } = await db.from('licitaciones').select('id').eq('hash', hash).single();
-      if (!existe) {
-        await db.from('licitaciones').insert({
-          titulo: lic.titulo, organismo: lic.organismo, tipo: lic.tipo,
-          objeto: lic.objeto, presupuesto: lic.presupuesto, costo_pliego: lic.costoPliego,
-          fecha_apertura: lic.fechaApertura, fecha_publicacion: lic.fechaPublicacion,
-          fuente: lic.fuente, url: lic.url, resumen: lic.resumen, tags: lic.tags,
-          hash: hash, notificado: false
-        });
-      }
-    }
+    if (!data.ok) throw new Error(data.error || 'Error en la búsqueda');
 
     allData = await cargarDesdeDB();
     await cargarStats();
