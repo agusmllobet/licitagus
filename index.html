@@ -367,6 +367,42 @@
     }
     .btn-sm:hover { background: var(--blue-light); }
 
+    .tile-estado-btns {
+      display: flex; gap: 6px; padding: 8px 14px 0;
+    }
+    .estado-btn {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 1.5px solid; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; background: white;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .estado-btn:hover { transform: scale(1.15); }
+    .estado-btn.aceptada { border-color: #28a745; color: #28a745; }
+    .estado-btn.aceptada.active { background: #28a745; color: white; }
+    .estado-btn.revisar { border-color: #f0a500; color: #f0a500; }
+    .estado-btn.revisar.active { background: #f0a500; color: white; }
+    .estado-btn.rechazada { border-color: #dc3545; color: #dc3545; }
+    .estado-btn.rechazada.active { background: #dc3545; color: white; }
+
+    .tile-estado-btns {
+      display: flex; gap: 6px; padding: 8px 14px 0;
+    }
+    .estado-btn {
+      width: 30px; height: 30px; border-radius: 50%;
+      border: 1.5px solid; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; background: white;
+      transition: all 0.15s; flex-shrink: 0;
+    }
+    .estado-btn:hover { transform: scale(1.15); }
+    .estado-btn.aceptada { border-color: #28a745; color: #28a745; }
+    .estado-btn.aceptada.active { background: #28a745; color: white; }
+    .estado-btn.revisar { border-color: #f0a500; color: #f0a500; }
+    .estado-btn.revisar.active { background: #f0a500; color: white; }
+    .estado-btn.rechazada { border-color: #dc3545; color: #dc3545; }
+    .estado-btn.rechazada.active { background: #dc3545; color: white; }
+
     /* States */
     .state-box {
       text-align: center; padding: 4rem 1rem;
@@ -422,6 +458,9 @@
 
 <div class="nav-tabs">
   <button class="nav-tab active" data-f="todas" onclick="filtrar(this)">Todas</button>
+  <button class="nav-tab" data-f="aceptada" onclick="filtrar(this)">✅ Aceptadas</button>
+  <button class="nav-tab" data-f="revisar" onclick="filtrar(this)">👁 Revisar</button>
+  <button class="nav-tab" data-f="rechazada" onclick="filtrar(this)">✖ Rechazadas</button>
   <button class="nav-tab" data-f="publica" onclick="filtrar(this)">Licitación pública</button>
   <button class="nav-tab" data-f="privada" onclick="filtrar(this)">Licitación privada</button>
   <button class="nav-tab" data-f="concurso" onclick="filtrar(this)">Concurso</button>
@@ -558,6 +597,9 @@ function renderResults(data) {
   if (activeFilter === 'nuevas') filtered = filtered.filter(r => !r.notificado);
   else if (activeFilter === 'sap') filtered = filtered.filter(r => r.tags?.some(t => t.toLowerCase().includes('sap')));
   else if (activeFilter === 'ia') filtered = filtered.filter(r => r.tags?.some(t => t.toLowerCase().includes('ia') || t.toLowerCase().includes('inteligencia')));
+  else if (activeFilter === 'aceptada') filtered = filtered.filter(r => r.estado === 'aceptada');
+  else if (activeFilter === 'revisar') filtered = filtered.filter(r => r.estado === 'revisar');
+  else if (activeFilter === 'rechazada') filtered = filtered.filter(r => r.estado === 'rechazada');
   else if (activeFilter !== 'todas') filtered = filtered.filter(r => r.tipo === activeFilter);
 
   document.getElementById('sectionText').textContent = filtered.length + ' licitacion' + (filtered.length !== 1 ? 'es' : '') + ' encontrada' + (filtered.length !== 1 ? 's' : '');
@@ -608,6 +650,40 @@ function renderResults(data) {
   }).join('');
 
   document.getElementById('results').innerHTML = html;
+}
+
+async function setEstado(event, i, nuevoEstado) {
+  event.stopPropagation();
+  const r = allData[i] || filteredData[i];
+  if (!r) return;
+  // Toggle - if already this estado, remove it
+  const estado = r.estado === nuevoEstado ? null : nuevoEstado;
+  const { error } = await db.from('licitaciones').update({ estado }).eq('id', r.id);
+  if (!error) {
+    r.estado = estado;
+    // Update buttons visually
+    const tile = document.getElementById('tile-' + i);
+    tile.querySelectorAll('.estado-btn').forEach(btn => btn.classList.remove('active'));
+    if (estado) {
+      tile.querySelector('.estado-btn.' + estado)?.classList.add('active');
+    }
+  }
+}
+
+async function setEstado(event, i, nuevoEstado) {
+  event.stopPropagation();
+  const r = allData[i];
+  if (!r) return;
+  const estado = r.estado === nuevoEstado ? null : nuevoEstado;
+  const { error } = await db.from('licitaciones').update({ estado: estado }).eq('id', r.id);
+  if (!error) {
+    r.estado = estado;
+    const tile = document.getElementById('tile-' + i);
+    if (tile) {
+      tile.querySelectorAll('.estado-btn').forEach(btn => btn.classList.remove('active'));
+      if (estado) tile.querySelector('.estado-btn.' + estado)?.classList.add('active');
+    }
+  }
 }
 
 function toggle(i) { document.getElementById('tile-' + i).classList.toggle('open'); }
