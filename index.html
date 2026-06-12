@@ -263,89 +263,25 @@ async function buscarNuevas() {
   btn.disabled = true;
   btn.innerHTML = '<i class="ti ti-loader"></i> Buscando...';
   document.getElementById('results').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p style="font-size:13px;color:#6a6d70;">Buscando en portales oficiales...</p></div>';
-
   try {
-    // Paso 1: buscar licitaciones reales con web search via Claude API
-    const searchResponse = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/buscar-licitaciones', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': ANTHROPIC_KEY,
-        'anthropic-version': '2023-06-01'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4000,
-        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: `Sos un asistente que busca licitaciones REALES publicadas en Argentina para una consultora IT especializada en SAP, desarrollo de software a medida, inteligencia artificial y mantenimiento de sistemas.
-
-REGLAS CRITICAS:
-- Usa web_search para buscar licitaciones reales en comprar.gob.ar, buenosairescompras.gob.ar, boletinoficial.gob.ar y sitios de organismos estatales
-- SOLO incluir licitaciones que realmente encontres en la busqueda web
-- NUNCA inventar licitaciones, titulos, organismos ni fechas
-- Si no encontras nada real, devolver []
-- La URL debe ser la URL real que encontraste
-
-Despues de buscar, devolver SOLO JSON valido sin texto extra ni backticks:
-[
-  {
-    "titulo": "titulo real",
-    "organismo": "organismo real",
-    "tipo": "publica|privada|concurso",
-    "objeto": "descripcion real del objeto",
-    "presupuesto": "monto o null",
-    "costoPliego": "costo o Sin costo o null",
-    "fechaApertura": "fecha o null",
-    "fechaPublicacion": "fecha de publicacion",
-    "fuente": "nombre del portal",
-    "url": "URL real encontrada",
-    "resumen": "por que es relevante para SAP/IT",
-    "tags": ["tags"]
-  }
-]`,
-        messages: [{
-          role: 'user',
-          content: q
-            ? `Busca licitaciones reales de Argentina publicadas recientemente sobre: "${q}". Busca en comprar.gob.ar, buenosairescompras.gob.ar y portales de organismos estatales.`
-            : `Busca licitaciones IT reales publicadas esta semana en Argentina. Busca en comprar.gob.ar y buenosairescompras.gob.ar usando terminos como: licitacion SAP, licitacion software, licitacion ERP, licitacion sistemas informaticos, licitacion consultoria IT, licitacion inteligencia artificial, licitacion desarrollo software.`
-        }]
-      })
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON },
+      body: JSON.stringify({ query: q || null })
     });
-
-    const searchData = await searchResponse.json();
-    const text = searchData.content.filter(i => i.type === 'text').map(i => i.text || '').join('');
-    if (!text.trim()) throw new Error('Sin respuesta');
-    const clean = text.replace(/```json|```/g, '').trim();
-    const licitaciones = clean === '[]' || !clean ? [] : JSON.parse(clean);
-
-    // Paso 2: guardar en Supabase las que son nuevas
-    for (const lic of licitaciones) {
-      const hash = generarHash(lic.titulo, lic.organismo);
-      const { data: existe } = await db.from('licitaciones').select('id').eq('hash', hash).single();
-      if (!existe) {
-        await db.from('licitaciones').insert({
-          titulo: lic.titulo, organismo: lic.organismo, tipo: lic.tipo,
-          objeto: lic.objeto, presupuesto: lic.presupuesto, costo_pliego: lic.costoPliego,
-          fecha_apertura: lic.fechaApertura, fecha_publicacion: lic.fechaPublicacion,
-          fuente: lic.fuente, url: lic.url, resumen: lic.resumen, tags: lic.tags,
-          hash, notificado: false
-        });
-      }
-    }
-
-    await db.from('licitagus_logs').insert({ licitaciones_encontradas: licitaciones.length, licitaciones_nuevas: licitaciones.length, status: 'ok' });
-
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Error');
     allData = await cargarDesdeDB();
     await cargarStats();
     renderResults(allData);
     document.getElementById('lastUpdate').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
-
   } catch(e) {
     document.getElementById('results').innerHTML = '<div class="state-box"><i class="ti ti-alert-circle"></i><div class="state-title">Error al buscar</div><p>Intentá de nuevo.</p></div>';
   }
   btn.disabled = false;
   btn.innerHTML = '<i class="ti ti-search"></i> Buscar nuevas';
 }
+
 
 async function cargarYBuscar() {
   const btn = document.getElementById('btnRefresh');
