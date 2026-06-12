@@ -314,6 +314,13 @@ function renderResults(data) {
   else if (activeFilter === 'revisar') filtered = filtered.filter(r => r.estado === 'revisar');
   else if (activeFilter === 'rechazada') filtered = filtered.filter(r => r.estado === 'rechazada');
 
+  // En todas, rechazadas van al fondo
+  if (activeFilter === 'todas') {
+    const noRechazadas = filtered.filter(r => r.estado !== 'rechazada');
+    const rechazadas = filtered.filter(r => r.estado === 'rechazada');
+    filtered = [...noRechazadas, ...rechazadas];
+  }
+
   currentFiltered = filtered;
   document.getElementById('sectionText').textContent = filtered.length + ' licitacion' + (filtered.length !== 1 ? 'es' : '') + ' encontrada' + (filtered.length !== 1 ? 's' : '');
 
