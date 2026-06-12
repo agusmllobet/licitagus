@@ -385,6 +385,11 @@
     .estado-btn.rechazada { border-color: #dc3545; color: #dc3545; }
     .estado-btn.rechazada.active { background: #dc3545; color: white; }
 
+    .pliego-gratis { color: #28a745 !important; font-weight: 500; }
+    .pliego-pago { color: #dc3545 !important; font-weight: 500; }
+    .pliego-gratis-text { color: #28a745; font-weight: 600; }
+    .pliego-pago-text { color: #dc3545; font-weight: 600; }
+
     .tile-estado-btns {
       display: flex; gap: 6px; padding: 8px 14px 0;
     }
@@ -402,6 +407,15 @@
     .estado-btn.revisar.active { background: #f0a500; color: white; }
     .estado-btn.rechazada { border-color: #dc3545; color: #dc3545; }
     .estado-btn.rechazada.active { background: #dc3545; color: white; }
+    .pliego-gratis { color: #28a745 !important; font-weight: 500; }
+    .pliego-pago { color: #dc3545 !important; font-weight: 500; }
+    .pliego-gratis-text { color: #28a745; font-weight: 600; }
+    .pliego-pago-text { color: #dc3545; font-weight: 600; }
+
+    .pliego-gratis { color: #28a745 !important; font-weight: 500; }
+    .pliego-pago { color: #dc3545 !important; font-weight: 500; }
+    .pliego-gratis-text { color: #28a745; font-weight: 600; }
+    .pliego-pago-text { color: #dc3545; font-weight: 600; }
 
     /* States */
     .state-box {
@@ -626,7 +640,7 @@ function renderResults(data) {
         '<div class="tile-meta-col">' +
           (r.fecha_apertura ? '<div class="tile-meta"><i class="ti ti-calendar" aria-hidden="true"></i>' + r.fecha_apertura + '</div>' : '') +
           (r.presupuesto ? '<div class="tile-meta"><i class="ti ti-currency-dollar" aria-hidden="true"></i>' + r.presupuesto + '</div>' : '') +
-          '<div class="tile-meta"><i class="ti ti-receipt" aria-hidden="true"></i>' + (r.costo_pliego || 'Pliego gratuito') + '</div>' +
+          '<div class="tile-meta pliego-' + (r.costo_pliego ? 'pago' : 'gratis') + '"><i class="ti ti-receipt" aria-hidden="true"></i>' + (r.costo_pliego || 'Pliego gratuito') + '</div>' +
         '</div>' +
         '<i class="ti ' + icon + ' tile-icon" aria-hidden="true"></i>' +
       '</div>' +
@@ -636,7 +650,7 @@ function renderResults(data) {
             '<div class="detail-field"><label>Objeto</label><span>' + (r.objeto || '—') + '</span></div>' +
             '<div class="detail-field"><label>Publicación</label><span>' + (r.fecha_publicacion || 'No informada') + '</span></div>' +
             '<div class="detail-field"><label>Presupuesto oficial</label><span>' + (r.presupuesto || 'No declarado') + '</span></div>' +
-            '<div class="detail-field"><label>Costo del pliego</label><span>' + (r.costo_pliego || 'Gratuito') + '</span></div>' +
+            '<div class="detail-field"><label>Costo del pliego</label><span class="pliego-' + (r.costo_pliego ? 'pago' : 'gratis') + '-text">' + (r.costo_pliego || 'Gratuito') + '</span></div>' +
           '</div>' +
           '<div class="insight-box"><label>Por qué te puede interesar</label><p>' + r.resumen + '</p></div>' +
         '</div>' +
