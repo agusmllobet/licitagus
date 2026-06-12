@@ -305,6 +305,7 @@ function esPliegoGratis(costo) {
 const tipoIcons = { publica: 'ti-building-government', privada: 'ti-building', concurso: 'ti-clipboard-list' };
 const tipoLabels = { publica: 'Licitación pública', privada: 'Licitación privada', concurso: 'Concurso' };
 
+let currentFiltered = [];
 function renderResults(data) {
   const q = document.getElementById('searchInput').value.toLowerCase();
   let filtered = data;
@@ -312,7 +313,9 @@ function renderResults(data) {
   if (activeFilter === 'aceptada') filtered = filtered.filter(r => r.estado === 'aceptada');
   else if (activeFilter === 'revisar') filtered = filtered.filter(r => r.estado === 'revisar');
   else if (activeFilter === 'rechazada') filtered = filtered.filter(r => r.estado === 'rechazada');
+  // 'todas' muestra todo - no filter needed
 
+  currentFiltered = filtered;
   document.getElementById('sectionText').textContent = filtered.length + ' licitacion' + (filtered.length !== 1 ? 'es' : '') + ' encontrada' + (filtered.length !== 1 ? 's' : '');
 
   if (filtered.length === 0) {
@@ -375,7 +378,7 @@ function renderResults(data) {
 
 async function setEstado(event, i, nuevoEstado) {
   event.stopPropagation();
-  const r = allData[i];
+  const r = currentFiltered[i];
   if (!r) return;
   const estado = r.estado === nuevoEstado ? null : nuevoEstado;
   const { error } = await db.from('licitaciones').update({ estado: estado }).eq('id', r.id);
