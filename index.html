@@ -13,13 +13,11 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.3.0/dist/tabler-icons.min.css" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
       --shell-bg: #1e2d47;
       --shell-hover: rgba(255,255,255,0.1);
       --page-bg: #cdd4dc;
       --tile-bg: #ffffff;
-      --tile-border: rgba(0,0,0,0.1);
       --tile-shadow: 0 2px 6px rgba(0,0,0,0.15);
       --tile-shadow-hover: 0 6px 18px rgba(0,0,0,0.22);
       --text: #32363a;
@@ -34,410 +32,127 @@
       --orange-light: #fef3e8;
       --purple: #5c35c9;
       --purple-light: #f3f0ff;
-      --section-label: #32363a;
-      --radius: 4px;
       --nav-border: rgba(255,255,255,0.25);
+      --radius: 4px;
     }
+    body { font-family: "72", Arial, Helvetica, sans-serif; background: var(--page-bg); color: var(--text); min-height: 100vh; font-size: 14px; }
 
-    body {
-      font-family: "72", Arial, Helvetica, sans-serif;
-      background: var(--page-bg);
-      color: var(--text);
-      min-height: 100vh;
-      font-size: 14px;
-    }
-
-    /* Shell bar */
-    .shell {
-      background: var(--shell-bg);
-      height: 48px;
-      display: flex;
-      align-items: center;
-      padding: 0 1rem;
-      gap: 16px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .shell-logo {
-      height: 28px;
-      width: auto;
-      display: block;
-    }
-
-    .shell-divider {
-      width: 1px;
-      height: 24px;
-      background: var(--nav-border);
-    }
-
-    .shell-title {
-      font-size: 14px;
-      font-weight: 400;
-      color: rgba(255,255,255,0.9);
-      letter-spacing: 0.2px;
-    }
-
+    .shell { background: var(--shell-bg); height: 48px; display: flex; align-items: center; padding: 0 1rem; gap: 16px; position: sticky; top: 0; z-index: 100; }
+    .shell-logo { height: 28px; width: auto; display: block; }
+    .shell-divider { width: 1px; height: 24px; background: var(--nav-border); }
+    .shell-title { font-size: 14px; font-weight: 400; color: rgba(255,255,255,0.9); }
     .shell-spacer { flex: 1; }
-
-    .shell-meta {
-      font-size: 12px;
-      color: rgba(255,255,255,0.55);
-    }
-
-    .shell-btn {
-      width: 36px; height: 36px;
-      border-radius: 50%;
-      border: none;
-      background: transparent;
-      color: rgba(255,255,255,0.85);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 18px;
-      transition: background 0.15s;
-    }
+    .shell-meta { font-size: 12px; color: rgba(255,255,255,0.55); }
+    .shell-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: transparent; color: rgba(255,255,255,0.85); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: background 0.15s; }
     .shell-btn:hover { background: var(--shell-hover); }
     .shell-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* Nav tabs */
-    .nav-tabs {
-      background: var(--shell-bg);
-      border-top: 1px solid var(--nav-border);
-      display: flex;
-      padding: 0 1rem;
-      gap: 0;
-      overflow-x: auto;
-      scrollbar-width: none;
-    }
+    .nav-tabs { background: var(--shell-bg); border-top: 1px solid var(--nav-border); display: flex; padding: 0 1rem; overflow-x: auto; scrollbar-width: none; }
     .nav-tabs::-webkit-scrollbar { display: none; }
-
-    .nav-tab {
-      padding: 10px 20px;
-      font-size: 13px;
-      color: rgba(255,255,255,0.65);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      white-space: nowrap;
-      background: transparent;
-      border-top: none; border-left: none; border-right: none;
-      transition: all 0.15s;
-    }
+    .nav-tab { padding: 10px 20px; font-size: 13px; color: rgba(255,255,255,0.65); cursor: pointer; border-bottom: 2px solid transparent; white-space: nowrap; background: transparent; border-top: none; border-left: none; border-right: none; transition: all 0.15s; }
     .nav-tab:hover { color: rgba(255,255,255,0.9); }
     .nav-tab.active { color: #fff; border-bottom-color: #fff; font-weight: 500; }
 
-    /* Search bar */
-    .searchbar {
-      background: #e8edf2;
-      border-bottom: 1px solid rgba(0,0,0,0.12);
-      padding: 10px 1.5rem;
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-
-    .searchbar input {
-      height: 36px;
-      padding: 0 12px 0 36px;
-      border: 1px solid rgba(0,0,0,0.2);
-      border-radius: var(--radius);
-      font-size: 14px;
-      color: var(--text);
-      background: white;
-      outline: none;
-      width: 300px;
-      transition: border-color 0.15s, box-shadow 0.15s;
-      position: relative;
-    }
+    .searchbar { background: #e8edf2; border-bottom: 1px solid rgba(0,0,0,0.12); padding: 10px 1.5rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .search-wrap { position: relative; display: flex; align-items: center; }
+    .search-wrap .ti-search { position: absolute; left: 10px; font-size: 15px; color: var(--text-faint); pointer-events: none; }
+    .searchbar input { height: 36px; padding: 0 12px 0 36px; border: 1px solid rgba(0,0,0,0.2); border-radius: var(--radius); font-size: 14px; color: var(--text); background: white; outline: none; width: 300px; transition: border-color 0.15s, box-shadow 0.15s; }
     .searchbar input:focus { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
     .searchbar input::placeholder { color: var(--text-faint); }
-
-    .search-wrap {
-      position: relative;
-      display: flex;
-      align-items: center;
-    }
-    .search-wrap .ti-search {
-      position: absolute;
-      left: 10px;
-      font-size: 15px;
-      color: var(--text-faint);
-      pointer-events: none;
-    }
-
-    .btn {
-      height: 36px; padding: 0 16px;
-      border-radius: var(--radius);
-      font-size: 14px; cursor: pointer;
-      display: flex; align-items: center; gap: 6px;
-      white-space: nowrap; transition: all 0.15s;
-    }
-    .btn-primary {
-      background: var(--blue); color: white; border: 1px solid var(--blue);
-    }
-    .btn-primary:hover { background: #0643a0; border-color: #0643a0; }
+    .btn { height: 36px; padding: 0 16px; border-radius: var(--radius); font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 6px; white-space: nowrap; transition: all 0.15s; }
+    .btn-primary { background: var(--blue); color: white; border: 1px solid var(--blue); }
+    .btn-primary:hover { background: #0643a0; }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* Page content */
-    .page {
-      padding: 1.25rem 1.5rem;
-      max-width: 1300px;
-      margin: 0 auto;
-    }
+    .page { padding: 1.25rem 1.5rem; max-width: 1300px; margin: 0 auto; }
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .section-title { font-size: 16px; font-weight: 400; color: var(--text); }
+    .section-count { font-size: 13px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; }
 
-    /* Section header */
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 14px;
-    }
+    .kpi-row { display: flex; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+    .kpi-tile { background: var(--tile-bg); border-radius: var(--radius); box-shadow: var(--tile-shadow); padding: 14px 20px; min-width: 150px; }
+    .kpi-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+    .kpi-value { font-size: 32px; font-weight: 300; color: var(--blue-mid); line-height: 1; }
+    .kpi-unit { font-size: 11px; color: var(--text-faint); margin-top: 3px; }
 
-    .section-title {
-      font-size: 16px;
-      font-weight: 400;
-      color: var(--section-label);
-    }
+    .tile-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
 
-    .section-count {
-      font-size: 13px;
-      color: var(--text-muted);
-      display: flex; align-items: center; gap: 6px;
-    }
-
-    .live-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: var(--green); display: inline-block;
-    }
-
-    /* KPI row */
-    .kpi-row {
-      display: flex; gap: 10px; margin-bottom: 1.25rem; flex-wrap: wrap;
-    }
-
-    .kpi-tile {
-      background: var(--tile-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--tile-shadow);
-      padding: 14px 20px;
-      min-width: 150px;
-    }
-
-    .kpi-label {
-      font-size: 12px; color: var(--text-muted); margin-bottom: 6px;
-    }
-
-    .kpi-value {
-      font-size: 32px; font-weight: 300; color: var(--blue-mid); line-height: 1;
-    }
-
-    .kpi-unit {
-      font-size: 11px; color: var(--text-faint); margin-top: 3px;
-    }
-
-    /* Tile grid - Fiori style */
-    .tile-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 10px;
-    }
-
-    /* Licitacion tile */
-    .tile {
-      background: var(--tile-bg);
-      border-radius: var(--radius);
-      box-shadow: var(--tile-shadow);
-      cursor: pointer;
-      transition: box-shadow 0.2s;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      min-height: 160px;
-      position: relative;
-    }
-
+    .tile { background: var(--tile-bg); border-radius: var(--radius); box-shadow: var(--tile-shadow); cursor: pointer; transition: box-shadow 0.2s; overflow: hidden; display: flex; flex-direction: column; min-height: 180px; position: relative; }
     .tile:hover { box-shadow: var(--tile-shadow-hover); }
     .tile.open { box-shadow: var(--tile-shadow-hover); outline: 2px solid var(--blue); outline-offset: -1px; }
 
-    .tile-content {
-      padding: 14px 14px 8px;
-      flex: 1;
-    }
-
-    .tile-badges {
-      display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px;
-    }
-
-    .badge {
-      font-size: 10px; font-weight: 600; padding: 2px 7px;
-      border-radius: 10px; border: 1px solid; text-transform: uppercase; letter-spacing: 0.3px;
-    }
+    .tile-content { padding: 14px 14px 8px; flex: 1; }
+    .tile-badges { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; }
+    .badge { font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 10px; border: 1px solid; text-transform: uppercase; letter-spacing: 0.3px; }
     .badge-publica { background: var(--blue-light); color: var(--blue); border-color: #b3ccf5; }
     .badge-privada { background: var(--orange-light); color: var(--orange); border-color: #f5c89b; }
     .badge-concurso { background: var(--purple-light); color: var(--purple); border-color: #c9bdf5; }
     .badge-new { background: var(--green-light); color: var(--green); border-color: #a3d4b5; }
 
-    .tile-title {
-      font-size: 14px; font-weight: 400; color: var(--text);
-      line-height: 1.4; margin-bottom: 5px;
-      display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
-    }
+    .tile-title { font-size: 14px; font-weight: 400; color: var(--text); line-height: 1.4; margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .tile-org { font-size: 12px; color: var(--blue-mid); }
 
-    .tile-org {
-      font-size: 12px; color: var(--blue-mid);
+    /* Estado buttons - flat, same family */
+    .tile-estado-btns { display: flex; gap: 8px; padding: 10px 14px 6px; align-items: center; }
+    .estado-btn {
+      width: 28px; height: 28px; border-radius: var(--radius);
+      border: 1.5px solid; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      background: white; transition: all 0.15s; flex-shrink: 0;
     }
+    .estado-btn svg { width: 14px; height: 14px; stroke-width: 2.5; fill: none; }
+    .estado-btn:hover { transform: scale(1.1); }
+    .estado-btn.aceptada { border-color: #28a745; }
+    .estado-btn.aceptada svg { stroke: #28a745; }
+    .estado-btn.aceptada.active { background: #28a745; }
+    .estado-btn.aceptada.active svg { stroke: white; }
+    .estado-btn.revisar { border-color: #e6a800; }
+    .estado-btn.revisar svg { stroke: #e6a800; }
+    .estado-btn.revisar.active { background: #e6a800; }
+    .estado-btn.revisar.active svg { stroke: white; }
+    .estado-btn.rechazada { border-color: #dc3545; }
+    .estado-btn.rechazada svg { stroke: #dc3545; }
+    .estado-btn.rechazada.active { background: #dc3545; }
+    .estado-btn.rechazada.active svg { stroke: white; }
 
-    /* Tile footer - Fiori style with icon bottom right */
-    .tile-footer {
-      padding: 8px 14px 12px;
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      border-top: 1px solid #f0f0f0;
-    }
-
-    .tile-meta-col {
-      display: flex; flex-direction: column; gap: 3px;
-    }
-
-    .tile-meta {
-      display: flex; align-items: center; gap: 4px;
-      font-size: 11px; color: var(--text-muted);
-    }
+    .tile-footer { padding: 8px 14px 12px; display: flex; align-items: flex-end; justify-content: space-between; border-top: 1px solid #f0f0f0; }
+    .tile-meta-col { display: flex; flex-direction: column; gap: 3px; }
+    .tile-meta { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-muted); }
     .tile-meta i { font-size: 12px; }
-
-    .tile-icon {
-      font-size: 36px;
-      color: #dce4ee;
-      line-height: 1;
-      flex-shrink: 0;
-    }
-
-    .tile-chevron {
-      position: absolute; right: 10px; top: 10px;
-      color: var(--text-faint); font-size: 15px;
-      transition: transform 0.2s;
-    }
+    .tile-meta.pliego-gratis { color: #28a745; font-weight: 500; }
+    .tile-meta.pliego-pago { color: #dc3545; font-weight: 500; }
+    .tile-icon { font-size: 36px; color: #dce4ee; line-height: 1; flex-shrink: 0; }
+    .tile-chevron { position: absolute; right: 10px; top: 10px; color: var(--text-faint); font-size: 15px; transition: transform 0.2s; }
     .tile.open .tile-chevron { transform: rotate(180deg); }
 
-    /* Expanded detail */
-    .tile-detail {
-      display: none;
-      background: #f7f9fb;
-      border-top: 1px solid #e0e8f0;
-    }
+    /* Expanded detail - wider/more comfortable */
+    .tile-detail { display: none; background: #f7f9fb; border-top: 1px solid #e0e8f0; }
     .tile.open .tile-detail { display: block; }
+    .tile.open { grid-column: span 2; }
+    .detail-inner { padding: 18px 20px; }
+    .detail-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+    .detail-field label { font-size: 10px; color: var(--text-muted); display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .detail-field span { font-size: 13px; color: var(--text); font-weight: 500; }
+    .detail-field span.pliego-gratis-text { color: #28a745; }
+    .detail-field span.pliego-pago-text { color: #dc3545; }
 
-    .detail-inner { padding: 14px; }
+    .insight-box { background: var(--blue-light); border: 1px solid #b3ccf5; border-radius: var(--radius); padding: 14px 16px; margin-bottom: 14px; }
+    .insight-box label { font-size: 10px; font-weight: 700; color: var(--blue); display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .insight-box p { font-size: 13px; color: #0643a0; line-height: 1.65; }
 
-    .detail-grid {
-      display: grid; grid-template-columns: 1fr 1fr;
-      gap: 10px; margin-bottom: 12px;
-    }
-
-    .detail-field label {
-      font-size: 10px; color: var(--text-muted); display: block;
-      margin-bottom: 2px; text-transform: uppercase; letter-spacing: 0.4px;
-    }
-    .detail-field span {
-      font-size: 12px; color: var(--text); font-weight: 500;
-    }
-
-    .insight-box {
-      background: var(--blue-light);
-      border: 1px solid #b3ccf5;
-      border-radius: var(--radius);
-      padding: 10px 12px; margin-bottom: 10px;
-    }
-    .insight-box label {
-      font-size: 10px; font-weight: 700; color: var(--blue);
-      display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.4px;
-    }
-    .insight-box p { font-size: 12px; color: #0643a0; line-height: 1.55; }
-
-    .tile-actions { padding: 0 14px 12px; display: flex; gap: 8px; }
-
-    .btn-sm {
-      height: 28px; padding: 0 12px; font-size: 12px;
-      border-radius: var(--radius); cursor: pointer;
-      display: flex; align-items: center; gap: 4px;
-      border: 1px solid #b3ccf5; background: white; color: var(--blue);
-      text-decoration: none; transition: all 0.15s;
-    }
+    .tile-actions { padding: 0 20px 16px; display: flex; gap: 8px; }
+    .btn-sm { height: 30px; padding: 0 14px; font-size: 12px; border-radius: var(--radius); cursor: pointer; display: flex; align-items: center; gap: 4px; border: 1px solid #b3ccf5; background: white; color: var(--blue); text-decoration: none; transition: all 0.15s; }
     .btn-sm:hover { background: var(--blue-light); }
 
-    .tile-estado-btns {
-      display: flex; gap: 6px; padding: 8px 14px 0;
-    }
-    .estado-btn {
-      width: 30px; height: 30px; border-radius: 50%;
-      border: 1.5px solid; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; background: white;
-      transition: all 0.15s; flex-shrink: 0;
-    }
-    .estado-btn:hover { transform: scale(1.15); }
-    .estado-btn.aceptada { border-color: #28a745; color: #28a745; }
-    .estado-btn.aceptada.active { background: #28a745; color: white; }
-    .estado-btn.revisar { border-color: #f0a500; color: #f0a500; }
-    .estado-btn.revisar.active { background: #f0a500; color: white; }
-    .estado-btn.rechazada { border-color: #dc3545; color: #dc3545; }
-    .estado-btn.rechazada.active { background: #dc3545; color: white; }
-
-    .pliego-gratis { color: #28a745 !important; font-weight: 500; }
-    .pliego-pago { color: #dc3545 !important; font-weight: 500; }
-    .pliego-gratis-text { color: #28a745; font-weight: 600; }
-    .pliego-pago-text { color: #dc3545; font-weight: 600; }
-
-    .tile-estado-btns {
-      display: flex; gap: 6px; padding: 8px 14px 0;
-    }
-    .estado-btn {
-      width: 30px; height: 30px; border-radius: 50%;
-      border: 1.5px solid; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; background: white;
-      transition: all 0.15s; flex-shrink: 0;
-    }
-    .estado-btn:hover { transform: scale(1.15); }
-    .estado-btn.aceptada { border-color: #28a745; color: #28a745; }
-    .estado-btn.aceptada.active { background: #28a745; color: white; }
-    .estado-btn.revisar { border-color: #f0a500; color: #f0a500; }
-    .estado-btn.revisar.active { background: #f0a500; color: white; }
-    .estado-btn.rechazada { border-color: #dc3545; color: #dc3545; }
-    .estado-btn.rechazada.active { background: #dc3545; color: white; }
-    .pliego-gratis { color: #28a745 !important; font-weight: 500; }
-    .pliego-pago { color: #dc3545 !important; font-weight: 500; }
-    .pliego-gratis-text { color: #28a745; font-weight: 600; }
-    .pliego-pago-text { color: #dc3545; font-weight: 600; }
-
-    .pliego-gratis { color: #28a745 !important; font-weight: 500; }
-    .pliego-pago { color: #dc3545 !important; font-weight: 500; }
-    .pliego-gratis-text { color: #28a745; font-weight: 600; }
-    .pliego-pago-text { color: #dc3545; font-weight: 600; }
-
-    /* States */
-    .state-box {
-      text-align: center; padding: 4rem 1rem;
-      color: var(--text-muted); grid-column: 1 / -1;
-    }
+    .state-box { text-align: center; padding: 4rem 1rem; color: var(--text-muted); grid-column: 1 / -1; }
     .state-box i { font-size: 48px; margin-bottom: 12px; display: block; color: var(--text-faint); }
     .state-box .state-title { font-size: 16px; font-weight: 400; color: var(--text); margin-bottom: 4px; }
-
     .spinner-wrap { text-align: center; padding: 4rem 1rem; grid-column: 1 / -1; }
-    .spinner {
-      width: 32px; height: 32px; border-radius: 50%;
-      border: 3px solid #d0d8e4; border-top-color: var(--blue);
-      animation: spin 0.8s linear infinite; margin: 0 auto 14px;
-    }
+    .spinner { width: 32px; height: 32px; border-radius: 50%; border: 3px solid #d0d8e4; border-top-color: var(--blue); animation: spin 0.8s linear infinite; margin: 0 auto 14px; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    .page-footer {
-      margin-top: 2rem; padding: 12px 0;
-      border-top: 1px solid rgba(0,0,0,0.1);
-      font-size: 12px; color: var(--text-faint); line-height: 1.7;
-    }
+    .page-footer { margin-top: 2rem; padding: 12px 0; border-top: 1px solid rgba(0,0,0,0.1); font-size: 12px; color: var(--text-faint); line-height: 1.7; }
 
     @media (max-width: 600px) {
       .shell-meta { display: none; }
@@ -447,13 +162,15 @@
       .searchbar input { width: 100%; }
       .btn-primary { width: 100%; justify-content: center; }
       .tile-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
+      .tile.open { grid-column: span 1; }
+      .detail-grid { grid-template-columns: repeat(2, 1fr); }
       .kpi-row { gap: 8px; }
       .kpi-tile { min-width: 90px; padding: 10px 12px; }
       .kpi-value { font-size: 24px; }
     }
-
     @media (max-width: 400px) {
       .tile-grid { grid-template-columns: 1fr; }
+      .tile.open { grid-column: span 1; }
     }
   </style>
 </head>
@@ -472,15 +189,9 @@
 
 <div class="nav-tabs">
   <button class="nav-tab active" data-f="todas" onclick="filtrar(this)">Todas</button>
-  <button class="nav-tab" data-f="aceptada" onclick="filtrar(this)">✅ Aceptadas</button>
-  <button class="nav-tab" data-f="revisar" onclick="filtrar(this)">👁 Revisar</button>
-  <button class="nav-tab" data-f="rechazada" onclick="filtrar(this)">✖ Rechazadas</button>
-  <button class="nav-tab" data-f="publica" onclick="filtrar(this)">Licitación pública</button>
-  <button class="nav-tab" data-f="privada" onclick="filtrar(this)">Licitación privada</button>
-  <button class="nav-tab" data-f="concurso" onclick="filtrar(this)">Concurso</button>
-  <button class="nav-tab" data-f="sap" onclick="filtrar(this)">SAP</button>
-  <button class="nav-tab" data-f="ia" onclick="filtrar(this)">IA</button>
-  <button class="nav-tab" data-f="nuevas" onclick="filtrar(this)">Solo nuevas</button>
+  <button class="nav-tab" data-f="aceptada" onclick="filtrar(this)">Aceptadas</button>
+  <button class="nav-tab" data-f="revisar" onclick="filtrar(this)">Revisar</button>
+  <button class="nav-tab" data-f="rechazada" onclick="filtrar(this)">Rechazadas</button>
 </div>
 
 <div class="searchbar">
@@ -494,38 +205,17 @@
 </div>
 
 <div class="page">
-
   <div class="kpi-row">
-    <div class="kpi-tile">
-      <div class="kpi-label">Total guardadas</div>
-      <div class="kpi-value" id="statTotal">—</div>
-      <div class="kpi-unit">licitaciones</div>
-    </div>
-    <div class="kpi-tile">
-      <div class="kpi-label">Nuevas hoy</div>
-      <div class="kpi-value" id="statHoy">—</div>
-      <div class="kpi-unit">encontradas</div>
-    </div>
-    <div class="kpi-tile">
-      <div class="kpi-label">Última búsqueda</div>
-      <div class="kpi-value" style="font-size:15px; padding-top:8px;" id="statUltima">—</div>
-    </div>
+    <div class="kpi-tile"><div class="kpi-label">Total guardadas</div><div class="kpi-value" id="statTotal">—</div><div class="kpi-unit">licitaciones</div></div>
+    <div class="kpi-tile"><div class="kpi-label">Nuevas hoy</div><div class="kpi-value" id="statHoy">—</div><div class="kpi-unit">encontradas</div></div>
+    <div class="kpi-tile"><div class="kpi-label">Última búsqueda</div><div class="kpi-value" style="font-size:15px;padding-top:8px;" id="statUltima">—</div></div>
   </div>
-
   <div class="section-header">
     <span class="section-title">Licitaciones IT · SAP · Software · IA</span>
-    <span class="section-count">
-      <span class="live-dot"></span>
-      <span id="sectionText">Cargando...</span>
-    </span>
+    <span class="section-count"><span class="live-dot"></span><span id="sectionText">Cargando...</span></span>
   </div>
-
   <div class="tile-grid" id="results"></div>
-
-  <div class="page-footer">
-    <strong>Fuentes:</strong> Boletín Oficial · Comprar.gob.ar · Buenos Aires Compras · ARSAT · YPF · AYSA · Aerolíneas Argentinas · Trenes Argentinos · INVAP · Nucleoeléctrica · PAMI · ANSES · AFIP · Banco Nación · Ministerios · Universidades nacionales · y más
-  </div>
-
+  <div class="page-footer"><strong>Fuentes:</strong> Boletín Oficial · Comprar.gob.ar · Buenos Aires Compras · ARSAT · YPF · AYSA · Aerolíneas Argentinas · Trenes Argentinos · INVAP · Nucleoeléctrica · PAMI · ANSES · AFIP · Banco Nación · Ministerios · Universidades nacionales · y más</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -533,9 +223,12 @@
 const SUPABASE_URL = "https://zimbmlxmjrsfcnqpjsqc.supabase.co";
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppbWJtbHhtanJzZmNucXBqc3FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMzM0MzgsImV4cCI6MjA5NjgwOTQzOH0.qMnPoiqTPICrXYGal8k8elvFSq-l9dLbcmAKZK3NIQc";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-
 let allData = [];
 let activeFilter = 'todas';
+
+const SVG_CHECK = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+const SVG_EYE = '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
+const SVG_X = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
 
 async function cargarDesdeDB() {
   const { data, error } = await db.from('licitaciones').select('*').order('created_at', { ascending: false }).limit(100);
@@ -563,19 +256,19 @@ async function buscarNuevas() {
   btn.innerHTML = '<i class="ti ti-loader"></i> Buscando...';
   document.getElementById('results').innerHTML = '<div class="spinner-wrap"><div class="spinner"></div><p style="font-size:13px;color:#6a6d70;">Buscando en fuentes oficiales...</p></div>';
   try {
-    const response = await fetch(SUPABASE_URL + '/functions/v1/buscar-licitaciones', {
+    const res = await fetch(SUPABASE_URL + '/functions/v1/buscar-licitaciones', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + SUPABASE_ANON },
       body: JSON.stringify({ query: q || null })
     });
-    const data = await response.json();
+    const data = await res.json();
     if (!data.ok) throw new Error(data.error || 'Error');
     allData = await cargarDesdeDB();
     await cargarStats();
     renderResults(allData);
     document.getElementById('lastUpdate').textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-AR', {hour:'2-digit', minute:'2-digit'});
   } catch(e) {
-    document.getElementById('results').innerHTML = '<div class="state-box"><i class="ti ti-alert-circle"></i><div class="state-title">Error al buscar</div><p>Intentá de nuevo en un momento.</p></div>';
+    document.getElementById('results').innerHTML = '<div class="state-box"><i class="ti ti-alert-circle"></i><div class="state-title">Error al buscar</div><p>Intentá de nuevo.</p></div>';
   }
   btn.disabled = false;
   btn.innerHTML = '<i class="ti ti-search"></i> Buscar nuevas';
@@ -601,6 +294,14 @@ function filtrar(el) {
   renderResults(allData);
 }
 
+function esPliegoGratis(costo) {
+  if (!costo) return true;
+  const lower = costo.toLowerCase().trim();
+  if (lower === '' || lower === 'sin costo' || lower === 'gratuito' || lower === 'gratis' || lower === '0' || lower === '$0') return true;
+  if (/^[\$\s0.,]+$/.test(lower)) return true;
+  return false;
+}
+
 const tipoIcons = { publica: 'ti-building-government', privada: 'ti-building', concurso: 'ti-clipboard-list' };
 const tipoLabels = { publica: 'Licitación pública', privada: 'Licitación privada', concurso: 'Concurso' };
 
@@ -608,13 +309,9 @@ function renderResults(data) {
   const q = document.getElementById('searchInput').value.toLowerCase();
   let filtered = data;
   if (q) filtered = filtered.filter(r => r.titulo?.toLowerCase().includes(q) || r.organismo?.toLowerCase().includes(q) || r.objeto?.toLowerCase().includes(q) || r.tags?.some(t => t.toLowerCase().includes(q)));
-  if (activeFilter === 'nuevas') filtered = filtered.filter(r => !r.notificado);
-  else if (activeFilter === 'sap') filtered = filtered.filter(r => r.tags?.some(t => t.toLowerCase().includes('sap')));
-  else if (activeFilter === 'ia') filtered = filtered.filter(r => r.tags?.some(t => t.toLowerCase().includes('ia') || t.toLowerCase().includes('inteligencia')));
-  else if (activeFilter === 'aceptada') filtered = filtered.filter(r => r.estado === 'aceptada');
+  if (activeFilter === 'aceptada') filtered = filtered.filter(r => r.estado === 'aceptada');
   else if (activeFilter === 'revisar') filtered = filtered.filter(r => r.estado === 'revisar');
   else if (activeFilter === 'rechazada') filtered = filtered.filter(r => r.estado === 'rechazada');
-  else if (activeFilter !== 'todas') filtered = filtered.filter(r => r.tipo === activeFilter);
 
   document.getElementById('sectionText').textContent = filtered.length + ' licitacion' + (filtered.length !== 1 ? 'es' : '') + ' encontrada' + (filtered.length !== 1 ? 's' : '');
 
@@ -626,6 +323,11 @@ function renderResults(data) {
   const html = filtered.map((r, i) => {
     const isNew = !r.notificado;
     const icon = tipoIcons[r.tipo] || 'ti-file-text';
+    const gratis = esPliegoGratis(r.costo_pliego);
+    const pliegoClass = gratis ? 'pliego-gratis' : 'pliego-pago';
+    const pliegoText = r.costo_pliego || 'Pliego gratuito';
+    const pliegoDetailClass = gratis ? 'pliego-gratis-text' : 'pliego-pago-text';
+
     return '<div class="tile" id="tile-' + i + '" onclick="toggle(' + i + ')">' +
       '<i class="ti ti-chevron-down tile-chevron" aria-hidden="true"></i>' +
       '<div class="tile-content">' +
@@ -636,11 +338,16 @@ function renderResults(data) {
         '<div class="tile-title">' + r.titulo + '</div>' +
         '<div class="tile-org">' + r.organismo + '</div>' +
       '</div>' +
+      '<div class="tile-estado-btns" onclick="event.stopPropagation()">' +
+        '<button class="estado-btn aceptada' + (r.estado === 'aceptada' ? ' active' : '') + '" onclick="setEstado(event,' + i + ','aceptada')" title="Me interesa">' + SVG_CHECK + '</button>' +
+        '<button class="estado-btn revisar' + (r.estado === 'revisar' ? ' active' : '') + '" onclick="setEstado(event,' + i + ','revisar')" title="Revisar después">' + SVG_EYE + '</button>' +
+        '<button class="estado-btn rechazada' + (r.estado === 'rechazada' ? ' active' : '') + '" onclick="setEstado(event,' + i + ','rechazada')" title="No me interesa">' + SVG_X + '</button>' +
+      '</div>' +
       '<div class="tile-footer">' +
         '<div class="tile-meta-col">' +
           (r.fecha_apertura ? '<div class="tile-meta"><i class="ti ti-calendar" aria-hidden="true"></i>' + r.fecha_apertura + '</div>' : '') +
           (r.presupuesto ? '<div class="tile-meta"><i class="ti ti-currency-dollar" aria-hidden="true"></i>' + r.presupuesto + '</div>' : '') +
-          '<div class="tile-meta pliego-' + (r.costo_pliego ? 'pago' : 'gratis') + '"><i class="ti ti-receipt" aria-hidden="true"></i>' + (r.costo_pliego || 'Pliego gratuito') + '</div>' +
+          '<div class="tile-meta ' + pliegoClass + '"><i class="ti ti-receipt" aria-hidden="true"></i>' + pliegoText + '</div>' +
         '</div>' +
         '<i class="ti ' + icon + ' tile-icon" aria-hidden="true"></i>' +
       '</div>' +
@@ -650,7 +357,7 @@ function renderResults(data) {
             '<div class="detail-field"><label>Objeto</label><span>' + (r.objeto || '—') + '</span></div>' +
             '<div class="detail-field"><label>Publicación</label><span>' + (r.fecha_publicacion || 'No informada') + '</span></div>' +
             '<div class="detail-field"><label>Presupuesto oficial</label><span>' + (r.presupuesto || 'No declarado') + '</span></div>' +
-            '<div class="detail-field"><label>Costo del pliego</label><span class="pliego-' + (r.costo_pliego ? 'pago' : 'gratis') + '-text">' + (r.costo_pliego || 'Gratuito') + '</span></div>' +
+            '<div class="detail-field"><label>Costo del pliego</label><span class="' + pliegoDetailClass + '">' + (r.costo_pliego || 'Gratuito') + '</span></div>' +
           '</div>' +
           '<div class="insight-box"><label>Por qué te puede interesar</label><p>' + r.resumen + '</p></div>' +
         '</div>' +
@@ -664,24 +371,6 @@ function renderResults(data) {
   }).join('');
 
   document.getElementById('results').innerHTML = html;
-}
-
-async function setEstado(event, i, nuevoEstado) {
-  event.stopPropagation();
-  const r = allData[i] || filteredData[i];
-  if (!r) return;
-  // Toggle - if already this estado, remove it
-  const estado = r.estado === nuevoEstado ? null : nuevoEstado;
-  const { error } = await db.from('licitaciones').update({ estado }).eq('id', r.id);
-  if (!error) {
-    r.estado = estado;
-    // Update buttons visually
-    const tile = document.getElementById('tile-' + i);
-    tile.querySelectorAll('.estado-btn').forEach(btn => btn.classList.remove('active'));
-    if (estado) {
-      tile.querySelector('.estado-btn.' + estado)?.classList.add('active');
-    }
-  }
 }
 
 async function setEstado(event, i, nuevoEstado) {
