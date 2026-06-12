@@ -232,7 +232,8 @@ const SVG_X = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></li
 
 async function cargarDesdeDB() {
   const { data, error } = await db.from('licitaciones').select('*').order('created_at', { ascending: false }).limit(100);
-  if (error) return [];
+  console.log('cargarDesdeDB:', data?.length, 'error:', error);
+  if (error) { console.error('DB error:', error); return []; }
   return data || [];
 }
 
@@ -278,6 +279,7 @@ async function cargarYBuscar() {
   const btn = document.getElementById('btnRefresh');
   btn.disabled = true;
   allData = await cargarDesdeDB();
+  console.log('allData length:', allData.length);
   await cargarStats();
   if (allData.length === 0) { await buscarNuevas(); }
   else {
