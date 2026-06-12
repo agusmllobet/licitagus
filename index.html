@@ -162,7 +162,7 @@
       .searchbar input { width: 100%; }
       .btn-primary { width: 100%; justify-content: center; }
       .tile-grid { grid-template-columns: 1fr 1fr; gap: 8px; }
-      .tile.open { grid-column: span 1; }
+      .tile.open { grid-column: 1 / -1; }
       .detail-grid { grid-template-columns: repeat(2, 1fr); }
       .kpi-row { gap: 8px; }
       .kpi-tile { min-width: 90px; padding: 10px 12px; }
@@ -170,7 +170,7 @@
     }
     @media (max-width: 400px) {
       .tile-grid { grid-template-columns: 1fr; }
-      .tile.open { grid-column: span 1; }
+      .tile.open { grid-column: 1 / -1; }
     }
   </style>
 </head>
