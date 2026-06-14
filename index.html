@@ -322,6 +322,15 @@ function renderResults(data) {
   const q = document.getElementById('searchInput').value.toLowerCase();
   let filtered = data;
   if (q) filtered = filtered.filter(r => r.titulo?.toLowerCase().includes(q) || r.organismo?.toLowerCase().includes(q) || r.objeto?.toLowerCase().includes(q) || r.tags?.some(t => t.toLowerCase().includes(q)));
+  // Ocultar licitaciones con fecha de apertura vencida
+  filtered = filtered.filter(r => {
+    if (!r.fecha_apertura) return true;
+    const fa = r.fecha_apertura;
+    const hoy = new Date(); hoy.setHours(0,0,0,0);
+    if (/^\d{4}-\d{2}-\d{2}/.test(fa)) { const d=new Date(fa.substring(0,10)); return isNaN(d.getTime())||d>=hoy; }
+    const m=fa.match(/^(\d{2})\/(\d{2})\/(\d{4})/); if(m){const d=new Date(parseInt(m[3]),parseInt(m[2])-1,parseInt(m[1]));return isNaN(d.getTime())||d>=hoy;}
+    return true;
+  });
   if (activeFilter === 'nuevas') filtered = filtered.filter(r => !r.estado);
   else if (activeFilter === 'aceptada') filtered = filtered.filter(r => r.estado === 'aceptada');
   else if (activeFilter === 'revisar') filtered = filtered.filter(r => r.estado === 'revisar');
