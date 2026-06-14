@@ -182,13 +182,16 @@
   <span class="shell-title">Buscador de licitaciones</span>
   <div class="shell-spacer"></div>
   <span class="shell-meta" id="lastUpdate"></span>
-  <button class="shell-btn" id="btnRefresh" onclick="cargarYBuscar()" title="Actualizar">
+  <button class="shell-btn" id="btnIdeas" onclick="abrirIdeas()" title="Mis ideas">
+          <i class="ti ti-bulb" aria-hidden="true"></i>
+        </button>
+        <button class="shell-btn" id="btnRefresh" onclick="cargarYBuscar()" title="Actualizar">
     <i class="ti ti-refresh" aria-hidden="true"></i>
   </button>
 </div>
 
 <div class="nav-tabs">
-  <button class="nav-tab active" data-f="todas" onclick="filtrar(this)">Todas</button>
+  <button class="nav-tab active" data-f="nuevas" onclick="filtrar(this)">Nuevas</button>
   <button class="nav-tab" data-f="aceptada" onclick="filtrar(this)">Aceptadas</button>
   <button class="nav-tab" data-f="revisar" onclick="filtrar(this)">Revisar</button>
   <button class="nav-tab" data-f="rechazada" onclick="filtrar(this)">Rechazadas</button>
@@ -225,7 +228,7 @@ const ANTHROPIC_KEY = "sk-ant-api03-Rb4R7_C9TIAgHS52M3CxLcvFVRt_34ZfrYL5X7Qr4Tom
 const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppbWJtbHhtanJzZmNucXBqc3FjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEyMzM0MzgsImV4cCI6MjA5NjgwOTQzOH0.qMnPoiqTPICrXYGal8k8elvFSq-l9dLbcmAKZK3NIQc";
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 let allData = [];
-let activeFilter = 'todas';
+let activeFilter = 'nuevas';
 
 const SVG_CHECK = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 const SVG_EYE = '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
@@ -319,7 +322,8 @@ function renderResults(data) {
   const q = document.getElementById('searchInput').value.toLowerCase();
   let filtered = data;
   if (q) filtered = filtered.filter(r => r.titulo?.toLowerCase().includes(q) || r.organismo?.toLowerCase().includes(q) || r.objeto?.toLowerCase().includes(q) || r.tags?.some(t => t.toLowerCase().includes(q)));
-  if (activeFilter === 'aceptada') filtered = filtered.filter(r => r.estado === 'aceptada');
+  if (activeFilter === 'nuevas') filtered = filtered.filter(r => !r.estado);
+  else if (activeFilter === 'aceptada') filtered = filtered.filter(r => r.estado === 'aceptada');
   else if (activeFilter === 'revisar') filtered = filtered.filter(r => r.estado === 'revisar');
   else if (activeFilter === 'rechazada') filtered = filtered.filter(r => r.estado === 'rechazada');
 
@@ -403,6 +407,10 @@ async function setEstado(event, i, nuevoEstado) {
   const { error } = await db.from('licitaciones').update({ estado: estado }).eq('id', r.id);
   if (!error) {
     r.estado = estado;
+    if (activeFilter === 'nuevas' || activeFilter === 'todas') {
+      renderResults(allData);
+      return;
+    }
     const tile = document.getElementById('tile-' + i);
     if (tile) {
       tile.querySelectorAll('.estado-btn').forEach(btn => btn.classList.remove('active'));
@@ -418,5 +426,32 @@ document.getElementById('searchInput').addEventListener('keydown', e => { if (e.
 
 cargarYBuscar();
 </script>
+
+  <div id="modalIdeas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:var(--bg-card);border-radius:12px;padding:24px;width:min(480px,90vw);max-height:80vh;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3 style="margin:0;font-size:1.1rem;"><i class="ti ti-bulb"></i> Mis ideas</h3>
+        <button onclick="cerrarIdeas()" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:var(--text-secondary);">&#x00D7;</button>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <input id="inputIdea" type="text" placeholder="Nueva idea..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;" onkeydown="if(event.key==='Enter')agregarIdea()">
+        <button onclick="agregarIdea()" style="padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:.9rem;">Agregar</button>
+      </div>
+      <ul id="listaIdeas" style="list-style:none;margin:0;padding:0;overflow-y:auto;max-height:340px;display:flex;flex-direction:column;gap:6px;"></ul>
+    </div>
+  </div>
+  <script>
+  function abrirIdeas(){document.getElementById('modalIdeas').style.display='flex';renderIdeas();setTimeout(()=>document.getElementById('inputIdea').focus(),50);}
+  function cerrarIdeas(){document.getElementById('modalIdeas').style.display='none';}
+  function getIdeas(){return JSON.parse(localStorage.getItem('licitagus_ideas')||'[]');}
+  function saveIdeas(a){localStorage.setItem('licitagus_ideas',JSON.stringify(a));}
+  function renderIdeas(){
+    const a=getIdeas();const ul=document.getElementById('listaIdeas');
+    ul.innerHTML=a.length?a.map((t,i)=>`<li style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border-radius:8px;font-size:.9rem;"><span style="flex:1">${t.replace(/</g,'&lt;')}</span><button onclick="eliminarIdea(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:1.2rem;" title="Eliminar">&#x00D7;</button></li>`).join(''):'<li style="color:var(--text-secondary);font-size:.85rem;text-align:center;padding:16px">Sin ideas todav&#x00ED;a</li>';
+  }
+  function agregarIdea(){const inp=document.getElementById('inputIdea');const t=inp.value.trim();if(!t)return;const a=getIdeas();a.unshift(t);saveIdeas(a);inp.value='';renderIdeas();}
+  function eliminarIdea(i){const a=getIdeas();a.splice(i,1);saveIdeas(a);renderIdeas();}
+  document.getElementById('modalIdeas').addEventListener('click',function(e){if(e.target===this)cerrarIdeas();});
+  </script>
 </body>
 </html>
