@@ -440,7 +440,7 @@ cargarYBuscar();
 
 
   <!-- BORA Menciones - vista completa -->
-  <div id="boraPagina" style="display:none;position:fixed;inset:0;z-index:100;background:var(--bg);flex-direction:column;">
+  <div id="boraPagina" style="display:none;position:fixed;inset:0;z-index:100;background:#0d1520;flex-direction:column;">
     <div class="shell" style="flex-shrink:0;">
       <button onclick="cerrarBORA()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:8px;padding:6px 12px;font-size:.85rem;font-weight:600;">
         <i class="ti ti-arrow-left"></i> Volver
@@ -509,15 +509,20 @@ cargarYBuscar();
 
   function abrirBORA() {
     boraVisible = true;
-    var el = document.getElementById('boraPagina');
-    el.style.display = 'flex';
+    document.getElementById('boraPagina').style.display = 'flex';
     document.getElementById('btnBORA').style.background = 'rgba(59,125,221,.3)';
+    document.querySelector('.nav-tabs').style.display = 'none';
+    document.querySelector('.searchbar') && (document.querySelector('.searchbar').style.display = 'none');
+    document.querySelector('.page') && (document.querySelector('.page').style.display = 'none');
     buscarMencionesBORA();
   }
   function cerrarBORA() {
     boraVisible = false;
     document.getElementById('boraPagina').style.display = 'none';
     document.getElementById('btnBORA').style.background = '';
+    document.querySelector('.nav-tabs').style.display = '';
+    document.querySelector('.searchbar') && (document.querySelector('.searchbar').style.display = '');
+    document.querySelector('.page') && (document.querySelector('.page').style.display = '');
   }
 
   function getBORASaved(){ return JSON.parse(localStorage.getItem('licitagus_bora_saved')||'[]'); }
