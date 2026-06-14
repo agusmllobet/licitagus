@@ -181,7 +181,10 @@
   <div class="shell-divider"></div>
   <div class="shell-spacer"></div>
   <span class="shell-meta" id="lastUpdate"></span>
-  <button class="shell-btn" id="btnIdeas" onclick="abrirIdeas()" title="Mis ideas">
+  <button class="shell-btn" id="btnBORA" onclick="abrirBORA()" title="Menciones en BORA">
+          <i class="ti ti-news" aria-hidden="true"></i>
+        </button>
+        <button class="shell-btn" id="btnIdeas" onclick="abrirIdeas()" title="Mis ideas">
           <i class="ti ti-bulb" aria-hidden="true"></i>
         </button>
         <button class="shell-btn" id="btnRefresh" onclick="cargarYBuscar()" title="Actualizar">
@@ -463,5 +466,63 @@ cargarYBuscar();
   function agregarIdea(){var inp=document.getElementById('inputIdea');var t=inp.value.trim();if(!t)return;var a=getIdeas();a.unshift(t);saveIdeas(a);inp.value='';renderIdeas();}
   function eliminarIdea(i){var a=getIdeas();a.splice(i,1);saveIdeas(a);renderIdeas();}
   </script>
+
+  <!-- BORA Menciones bottom sheet -->
+  <div id="modalBORA" onclick="if(event.target===this)cerrarBORA()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:flex-end;justify-content:center;">
+    <div style="background:#1e2130;border-radius:20px 20px 0 0;padding:0;width:100%;max-width:700px;max-height:82vh;display:flex;flex-direction:column;animation:slideUp .25s ease;">
+      <div style="padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:1.05rem;font-weight:600;color:#fff;">&#x1F4F0; Menciones en Boletin Oficial</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button onclick="buscarMencionesBORA()" id="btnBuscarBORA" style="padding:6px 14px;border-radius:8px;background:#3b7ddd;color:#fff;border:none;cursor:pointer;font-size:.85rem;font-weight:600;">Actualizar</button>
+          <button onclick="cerrarBORA()" style="background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:50%;width:28px;height:28px;font-size:1rem;display:flex;align-items:center;justify-content:center;">&#x00D7;</button>
+        </div>
+      </div>
+      <div id="boraMenciones" style="overflow-y:auto;flex:1;padding:12px 20px 20px;display:flex;flex-direction:column;gap:12px;">
+        <p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:24px 0;">Presioná Actualizar para buscar menciones recientes.</p>
+      </div>
+    </div>
+  </div>
+  <script>
+  const RAZONES_SOCIALES = []; // se completan despues
+
+  function abrirBORA(){document.getElementById('modalBORA').style.display='flex';}
+  function cerrarBORA(){document.getElementById('modalBORA').style.display='none';}
+
+  async function buscarMencionesBORA(){
+    const cont=document.getElementById('boraMenciones');
+    const btn=document.getElementById('btnBuscarBORA');
+    if(!RAZONES_SOCIALES.length){cont.innerHTML='<p style="color:rgba(255,255,255,.5);text-align:center;padding:24px 0;font-size:.9rem;">No hay razones sociales configuradas todavía.</p>';return;}
+    btn.textContent='Buscando...';btn.disabled=true;
+    cont.innerHTML='<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:24px 0">Buscando en Boletin Oficial...</p>';
+    const resultados=[];
+    for(const rs of RAZONES_SOCIALES){
+      try{
+        const url=`https://www.boletinoficial.gob.ar/busqueda/ficha?norma=${encodeURIComponent(rs)}&desde=&hasta=&pageSize=10&pageNum=1`;
+        const r=await fetch(url,{headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}});
+        if(!r.ok)continue;
+        const data=await r.json();
+        const items=(data.data?.normas||data.normas||[]).slice(0,5);
+        for(const it of items){
+          const titulo=it.titulo||it.sumario||it.descripcion||'';
+          const fecha=it.fecha_publicacion||it.fecha||'';
+          const link=it.url_norma||(it.id_norma?`https://www.boletinoficial.gob.ar/detalleAviso/primera/${it.id_norma}`:'https://www.boletinoficial.gob.ar');
+          resultados.push({rs,titulo,fecha,link});
+        }
+      }catch(e){console.warn('BORA search err',rs,e);}
+    }
+    btn.textContent='Actualizar';btn.disabled=false;
+    if(!resultados.length){cont.innerHTML='<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:24px 0">Sin menciones recientes encontradas.</p>';return;}
+    cont.innerHTML=resultados.map(r=>`
+      <a href="${r.link}" target="_blank" style="text-decoration:none;display:block;background:rgba(255,255,255,.05);border-radius:10px;padding:12px 14px;border:1px solid rgba(255,255,255,.08);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+          <span style="font-size:.75rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.04em;">${r.rs.replace(/</g,'&lt;')}</span>
+          <span style="font-size:.72rem;color:rgba(255,255,255,.35);">${r.fecha}</span>
+        </div>
+        <span style="font-size:.88rem;color:#d0d4e0;line-height:1.4;">${r.titulo.replace(/</g,'&lt;').substring(0,180)}</span>
+        <span style="display:block;font-size:.75rem;color:#3b9ddd;margin-top:4px;">Ver en BORA &#x2192;</span>
+      </a>`).join('');
+  }
+  </script>
+
 </body>
 </html>
