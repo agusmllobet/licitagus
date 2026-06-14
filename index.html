@@ -427,31 +427,33 @@ document.getElementById('searchInput').addEventListener('keydown', e => { if (e.
 cargarYBuscar();
 </script>
 
-  <div id="modalIdeas" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center;">
-    <div style="background:var(--bg-card);border-radius:12px;padding:24px;width:min(480px,90vw);max-height:80vh;display:flex;flex-direction:column;gap:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <h3 style="margin:0;font-size:1.1rem;"><i class="ti ti-bulb"></i> Mis ideas</h3>
-        <button onclick="cerrarIdeas()" style="background:none;border:none;cursor:pointer;font-size:1.4rem;color:var(--text-secondary);">&#x00D7;</button>
+  <!-- Ideas bottom sheet -->
+  <div id="modalIdeas" onclick="if(event.target===this)cerrarIdeas()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:flex-end;justify-content:center;">
+    <div style="background:#1e2130;border-radius:20px 20px 0 0;padding:0;width:100%;max-width:560px;max-height:75vh;display:flex;flex-direction:column;animation:slideUp .25s ease;">
+      <div style="padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-size:1.05rem;font-weight:600;color:#fff;">&#x1F4A1; Ideas para la app</span>
+        <button onclick="cerrarIdeas()" style="background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:50%;width:28px;height:28px;font-size:1rem;display:flex;align-items:center;justify-content:center;">&#x00D7;</button>
       </div>
-      <div style="display:flex;gap:8px;">
-        <input id="inputIdea" type="text" placeholder="Nueva idea..." style="flex:1;padding:8px 12px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:.9rem;" onkeydown="if(event.key==='Enter')agregarIdea()">
-        <button onclick="agregarIdea()" style="padding:8px 14px;border-radius:8px;background:var(--accent);color:#fff;border:none;cursor:pointer;font-size:.9rem;">Agregar</button>
+      <p style="margin:8px 20px 0;font-size:.8rem;color:rgba(255,255,255,.45);">Anotá acá lo que se te ocurra. Cuando quieras, pedime "recopilemos las ideas" y lo implementamos.</p>
+      <ul id="listaIdeas" style="list-style:none;margin:8px 0;padding:0 20px;overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:6px;"></ul>
+      <div style="padding:12px 20px 20px;display:flex;gap:8px;border-top:1px solid rgba(255,255,255,.08);">
+        <input id="inputIdea" type="text" placeholder="Nueva idea..." style="flex:1;padding:10px 14px;border:1px solid rgba(255,255,255,.15);border-radius:10px;background:rgba(255,255,255,.07);color:#fff;font-size:.9rem;outline:none;" onkeydown="if(event.key==='Enter')agregarIdea()">
+        <button onclick="agregarIdea()" style="padding:10px 18px;border-radius:10px;background:#3b7ddd;color:#fff;border:none;cursor:pointer;font-size:.9rem;font-weight:600;white-space:nowrap;">+ Agregar</button>
       </div>
-      <ul id="listaIdeas" style="list-style:none;margin:0;padding:0;overflow-y:auto;max-height:340px;display:flex;flex-direction:column;gap:6px;"></ul>
     </div>
   </div>
+  <style>@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}</style>
   <script>
-  function abrirIdeas(){document.getElementById('modalIdeas').style.display='flex';renderIdeas();setTimeout(()=>document.getElementById('inputIdea').focus(),50);}
+  function abrirIdeas(){var m=document.getElementById('modalIdeas');m.style.display='flex';renderIdeas();setTimeout(()=>document.getElementById('inputIdea').focus(),80);}
   function cerrarIdeas(){document.getElementById('modalIdeas').style.display='none';}
   function getIdeas(){return JSON.parse(localStorage.getItem('licitagus_ideas')||'[]');}
   function saveIdeas(a){localStorage.setItem('licitagus_ideas',JSON.stringify(a));}
   function renderIdeas(){
-    const a=getIdeas();const ul=document.getElementById('listaIdeas');
-    ul.innerHTML=a.length?a.map((t,i)=>`<li style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg);border-radius:8px;font-size:.9rem;"><span style="flex:1">${t.replace(/</g,'&lt;')}</span><button onclick="eliminarIdea(${i})" style="background:none;border:none;cursor:pointer;color:var(--text-secondary);font-size:1.2rem;" title="Eliminar">&#x00D7;</button></li>`).join(''):'<li style="color:var(--text-secondary);font-size:.85rem;text-align:center;padding:16px">Sin ideas todav&#x00ED;a</li>';
+    var a=getIdeas();var ul=document.getElementById('listaIdeas');
+    ul.innerHTML=a.length?a.map((t,i)=>`<li style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:rgba(255,255,255,.06);border-radius:10px;font-size:.9rem;color:#e8eaf0;"><span style="flex:1">${t.replace(/</g,'&lt;')}</span><button onclick="eliminarIdea(${i})" style="background:rgba(255,255,255,.08);border:none;cursor:pointer;color:rgba(255,255,255,.5);border-radius:50%;width:24px;height:24px;font-size:1rem;flex-shrink:0;display:flex;align-items:center;justify-content:center;">&#x00D7;</button></li>`).join(''):'<li style="color:rgba(255,255,255,.35);font-size:.85rem;text-align:center;padding:24px 0">Sin ideas todav&#x00ED;a</li>';
   }
-  function agregarIdea(){const inp=document.getElementById('inputIdea');const t=inp.value.trim();if(!t)return;const a=getIdeas();a.unshift(t);saveIdeas(a);inp.value='';renderIdeas();}
-  function eliminarIdea(i){const a=getIdeas();a.splice(i,1);saveIdeas(a);renderIdeas();}
-  document.getElementById('modalIdeas').addEventListener('click',function(e){if(e.target===this)cerrarIdeas();});
+  function agregarIdea(){var inp=document.getElementById('inputIdea');var t=inp.value.trim();if(!t)return;var a=getIdeas();a.unshift(t);saveIdeas(a);inp.value='';renderIdeas();}
+  function eliminarIdea(i){var a=getIdeas();a.splice(i,1);saveIdeas(a);renderIdeas();}
   </script>
 </body>
 </html>
