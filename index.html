@@ -181,7 +181,7 @@
   <div class="shell-divider"></div>
   <div class="shell-spacer"></div>
   <span class="shell-meta" id="lastUpdate"></span>
-  <button class="shell-btn" id="btnBORA" onclick="abrirBORA()" title="Menciones en BORA">
+  <button class="shell-btn" id="btnBORA" onclick="toggleBORA()" title="Menciones en BORA">
           <i class="ti ti-news" aria-hidden="true"></i>
         </button>
         <button class="shell-btn" id="btnIdeas" onclick="abrirIdeas()" title="Mis ideas">
@@ -438,6 +438,24 @@ document.getElementById('searchInput').addEventListener('keydown', e => { if (e.
 cargarYBuscar();
 </script>
 
+
+  <!-- BORA Menciones - vista completa -->
+  <div id="boraPagina" style="display:none;position:fixed;inset:0;z-index:100;background:var(--bg);flex-direction:column;">
+    <div class="shell" style="flex-shrink:0;">
+      <button onclick="cerrarBORA()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:8px;padding:6px 12px;font-size:.85rem;font-weight:600;">
+        <i class="ti ti-arrow-left"></i> Volver
+      </button>
+      <span style="font-size:.95rem;font-weight:600;color:#fff;margin-left:4px;">&#x1F4F0; Menciones en Boletin Oficial</span>
+      <div class="shell-spacer"></div>
+      <button onclick="buscarMencionesBORA()" id="btnBuscarBORA" style="padding:6px 16px;border-radius:8px;background:#3b7ddd;color:#fff;border:none;cursor:pointer;font-size:.85rem;font-weight:600;">Actualizar</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px;">
+      <div id="boraMenciones" style="display:flex;flex-direction:column;gap:10px;max-width:900px;margin:0 auto;">
+        <p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Presiona Actualizar para buscar menciones recientes en el Boletin Oficial.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- Ideas bottom sheet -->
   <div id="modalIdeas" onclick="if(event.target===this)cerrarIdeas()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:flex-end;justify-content:center;">
     <div style="background:#1e2130;border-radius:20px 20px 0 0;padding:0;width:100%;max-width:560px;max-height:75vh;display:flex;flex-direction:column;animation:slideUp .25s ease;">
@@ -467,62 +485,119 @@ cargarYBuscar();
   function eliminarIdea(i){var a=getIdeas();a.splice(i,1);saveIdeas(a);renderIdeas();}
   </script>
 
-  <!-- BORA Menciones bottom sheet -->
-  <div id="modalBORA" onclick="if(event.target===this)cerrarBORA()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:2000;align-items:flex-end;justify-content:center;">
-    <div style="background:#1e2130;border-radius:20px 20px 0 0;padding:0;width:100%;max-width:700px;max-height:82vh;display:flex;flex-direction:column;animation:slideUp .25s ease;">
-      <div style="padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:space-between;">
-        <span style="font-size:1.05rem;font-weight:600;color:#fff;">&#x1F4F0; Menciones en Boletin Oficial</span>
-        <div style="display:flex;gap:8px;align-items:center;">
-          <button onclick="buscarMencionesBORA()" id="btnBuscarBORA" style="padding:6px 14px;border-radius:8px;background:#3b7ddd;color:#fff;border:none;cursor:pointer;font-size:.85rem;font-weight:600;">Actualizar</button>
-          <button onclick="cerrarBORA()" style="background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:50%;width:28px;height:28px;font-size:1rem;display:flex;align-items:center;justify-content:center;">&#x00D7;</button>
-        </div>
-      </div>
-      <div id="boraMenciones" style="overflow-y:auto;flex:1;padding:12px 20px 20px;display:flex;flex-direction:column;gap:12px;">
-        <p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:24px 0;">Presioná Actualizar para buscar menciones recientes.</p>
-      </div>
-    </div>
-  </div>
   <script>
-  const RAZONES_SOCIALES = []; // se completan despues
+  const RAZONES_SOCIALES = [
+    {nombre:'AySA', razon:'Agua y Saneamientos Argentinos S.A.'},
+    {nombre:'PAMI', razon:'Instituto Nacional de Servicios Sociales para Jubilados y Pensionados'},
+    {nombre:'BCyL', razon:'Belgrano Cargas y Logistica S.A.'},
+    {nombre:'CAMMESA', razon:'Compania Administradora del Mercado Mayorista Electrico S.A.'},
+    {nombre:'ABSA', razon:'Aguas Bonaerenses S.A.'},
+    {nombre:'ASSA', razon:'Aguas Santafesinas S.A.'},
+    {nombre:'AUSA', razon:'Autopistas Urbanas S.A.'},
+    {nombre:'EANA', razon:'Empresa Argentina de Navegacion Aerea S.E.'},
+    {nombre:'ENARSA', razon:'Energia Argentina S.A.'},
+    {nombre:'GCBA', razon:'Gobierno de la Ciudad Autonoma de Buenos Aires'},
+    {nombre:'Terminal 6', razon:'Terminal 6 Industrial S.A.'},
+    {nombre:'TSM', razon:'Terminal de Servicios Portuarios y Logisticos TSM S.A.'},
+    {nombre:'Termoelectrica San Martin', razon:'Termoelectrica Jose de San Martin S.A.'},
+  ];
 
-  function abrirBORA(){document.getElementById('modalBORA').style.display='flex';}
-  function cerrarBORA(){document.getElementById('modalBORA').style.display='none';}
+  const BORA_EDGE = 'https://zimbmlxmjrsfcnqpjsqc.supabase.co/functions/v1/buscar-licitaciones';
+  let boraVisible = false;
 
-  async function buscarMencionesBORA(){
-    const cont=document.getElementById('boraMenciones');
-    const btn=document.getElementById('btnBuscarBORA');
-    if(!RAZONES_SOCIALES.length){cont.innerHTML='<p style="color:rgba(255,255,255,.5);text-align:center;padding:24px 0;font-size:.9rem;">No hay razones sociales configuradas todavía.</p>';return;}
-    btn.textContent='Buscando...';btn.disabled=true;
-    cont.innerHTML='<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:24px 0">Buscando en Boletin Oficial...</p>';
-    const resultados=[];
-    for(const rs of RAZONES_SOCIALES){
-      try{
-        const url=`https://www.boletinoficial.gob.ar/busqueda/ficha?norma=${encodeURIComponent(rs)}&desde=&hasta=&pageSize=10&pageNum=1`;
-        const r=await fetch(url,{headers:{'Accept':'application/json','X-Requested-With':'XMLHttpRequest'}});
-        if(!r.ok)continue;
-        const data=await r.json();
-        const items=(data.data?.normas||data.normas||[]).slice(0,5);
-        for(const it of items){
-          const titulo=it.titulo||it.sumario||it.descripcion||'';
-          const fecha=it.fecha_publicacion||it.fecha||'';
-          const link=it.url_norma||(it.id_norma?`https://www.boletinoficial.gob.ar/detalleAviso/primera/${it.id_norma}`:'https://www.boletinoficial.gob.ar');
-          resultados.push({rs,titulo,fecha,link});
-        }
-      }catch(e){console.warn('BORA search err',rs,e);}
+  function toggleBORA() { boraVisible ? cerrarBORA() : abrirBORA(); }
+
+  function abrirBORA() {
+    boraVisible = true;
+    var el = document.getElementById('boraPagina');
+    el.style.display = 'flex';
+    document.getElementById('btnBORA').style.background = 'rgba(59,125,221,.3)';
+    buscarMencionesBORA();
+  }
+  function cerrarBORA() {
+    boraVisible = false;
+    document.getElementById('boraPagina').style.display = 'none';
+    document.getElementById('btnBORA').style.background = '';
+  }
+
+  function getBORASaved(){ return JSON.parse(localStorage.getItem('licitagus_bora_saved')||'[]'); }
+  function getBORADismissed(){ return JSON.parse(localStorage.getItem('licitagus_bora_dismissed')||'[]'); }
+
+  function toggleBORASave(id, btn) {
+    const saved = getBORASaved();
+    const tile = document.getElementById('bora-tile-' + id);
+    if (saved.includes(id)) {
+      localStorage.setItem('licitagus_bora_saved', JSON.stringify(saved.filter(function(x){return x!==id;})));
+      if (tile) { tile.style.borderColor='rgba(255,255,255,.08)'; tile.style.background='rgba(255,255,255,.05)'; }
+      btn.innerHTML = SVG_CHECK; btn.style.background='rgba(255,255,255,.1)'; btn.style.color='rgba(255,255,255,.5)';
+    } else {
+      saved.push(id); localStorage.setItem('licitagus_bora_saved', JSON.stringify(saved));
+      const d = getBORADismissed().filter(function(x){return x!==id;}); localStorage.setItem('licitagus_bora_dismissed', JSON.stringify(d));
+      if (tile) { tile.style.borderColor='#2e7d32'; tile.style.background='rgba(46,125,50,.12)'; }
+      btn.innerHTML = SVG_CHECK; btn.style.background='#2e7d32'; btn.style.color='#fff';
     }
-    btn.textContent='Actualizar';btn.disabled=false;
-    if(!resultados.length){cont.innerHTML='<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:24px 0">Sin menciones recientes encontradas.</p>';return;}
-    cont.innerHTML=resultados.map(r=>`
-      <a href="${r.link}" target="_blank" style="text-decoration:none;display:block;background:rgba(255,255,255,.05);border-radius:10px;padding:12px 14px;border:1px solid rgba(255,255,255,.08);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
-          <span style="font-size:.75rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.04em;">${r.rs.replace(/</g,'&lt;')}</span>
-          <span style="font-size:.72rem;color:rgba(255,255,255,.35);">${r.fecha}</span>
-        </div>
-        <span style="font-size:.88rem;color:#d0d4e0;line-height:1.4;">${r.titulo.replace(/</g,'&lt;').substring(0,180)}</span>
-        <span style="display:block;font-size:.75rem;color:#3b9ddd;margin-top:4px;">Ver en BORA &#x2192;</span>
-      </a>`).join('');
+  }
+
+  function removeBORATile(id) {
+    const d = getBORADismissed(); d.push(id); localStorage.setItem('licitagus_bora_dismissed', JSON.stringify(d));
+    const s = getBORASaved().filter(function(x){return x!==id;}); localStorage.setItem('licitagus_bora_saved', JSON.stringify(s));
+    const tile = document.getElementById('bora-tile-' + id); if (tile) tile.remove();
+  }
+
+  async function buscarMencionesBORA() {
+    const cont = document.getElementById('boraMenciones');
+    const btn = document.getElementById('btnBuscarBORA');
+    btn.textContent = 'Buscando...'; btn.disabled = true;
+    cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Consultando Boletin Oficial...</p>';
+
+    const dismissed = getBORADismissed();
+    const saved = getBORASaved();
+    const tiles = [];
+
+    for (const rs of RAZONES_SOCIALES) {
+      try {
+        const r = await fetch(BORA_EDGE + '?boraQ=' + encodeURIComponent(rs.razon));
+        if (!r.ok) continue;
+        const data = await r.json();
+        const items = (data.resultados || []).slice(0, 5);
+        for (const it of items) {
+          const raw = rs.razon + (it.titulo || '') + (it.id || '');
+          const id = btoa(unescape(encodeURIComponent(raw))).replace(/[^a-zA-Z0-9]/g,'').substring(0, 24);
+          if (dismissed.includes(id)) continue;
+          tiles.push({id:id, rs:rs, it:it, isSaved:saved.includes(id)});
+        }
+      } catch(e) { console.warn('BORA', rs.nombre, e); }
+    }
+
+    btn.textContent = 'Actualizar'; btn.disabled = false;
+
+    if (!tiles.length) {
+      cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Sin menciones recientes encontradas.</p>';
+      return;
+    }
+
+    cont.innerHTML = tiles.map(function(t) {
+      const id = t.id, rs = t.rs, it = t.it, isSaved = t.isSaved;
+      const savedStyle = isSaved ? 'border-color:#2e7d32;background:rgba(46,125,50,.12);' : 'border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.05);';
+      const tickBg = isSaved ? '#2e7d32' : 'rgba(255,255,255,.1)';
+      const tickColor = isSaved ? '#fff' : 'rgba(255,255,255,.5)';
+      return '<div id="bora-tile-' + id + '" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid;' + savedStyle + '">'
+        + '<div style="flex:1;min-width:0;">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">'
+        + '<span style="font-size:.72rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">' + rs.nombre + '</span>'
+        + '<span style="font-size:.72rem;color:rgba(255,255,255,.4);white-space:nowrap;">' + (it.fecha || '') + '</span>'
+        + (it.seccion ? '<span style="font-size:.7rem;color:rgba(255,255,255,.28);padding:1px 6px;background:rgba(255,255,255,.07);border-radius:4px;">' + it.seccion + '</span>' : '')
+        + '</div>'
+        + '<a href="' + (it.url || 'https://www.boletinoficial.gob.ar') + '" target="_blank" style="text-decoration:none;">'
+        + '<span style="font-size:.9rem;color:#d0d4e0;line-height:1.4;display:block;">' + (it.titulo || '').replace(/</g,'&lt;').substring(0,300) + '</span>'
+        + '<span style="font-size:.75rem;color:#3b9ddd;margin-top:3px;display:block;">Ver en BORA &#x2192;</span>'
+        + '</a></div>'
+        + '<div style="display:flex;gap:8px;flex-shrink:0;">'
+        + '<button onclick="toggleBORASave(\'' + id + '\',this)" title="Guardar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:' + tickBg + ';color:' + tickColor + ';display:flex;align-items:center;justify-content:center;">' + SVG_CHECK + '</button>'
+        + '<button onclick="removeBORATile(\'' + id + '\')" title="Descartar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;">' + SVG_X + '</button>'
+        + '</div></div>';
+    }).join('');
   }
   </script>
-
 </body>
 </html>
