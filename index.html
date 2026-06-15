@@ -465,7 +465,8 @@ cargarYBuscar();
         <div style="max-width:700px;margin:0 auto;">
           <div id="boraDetalleRazon" style="font-size:.75rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;"></div>
           <div id="boraDetalleMeta" style="font-size:.8rem;color:rgba(255,255,255,.4);margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;"></div>
-          <div id="boraDetalleTitulo" style="font-size:1rem;color:#e8eaf0;line-height:1.6;margin-bottom:28px;"></div>
+          <div id="boraDetalleTitulo" style="font-size:.95rem;font-weight:600;color:#e8eaf0;line-height:1.5;margin-bottom:16px;"></div>
+          <div id="boraDetalleCuerpo" style="font-size:.88rem;color:#c0c4d0;line-height:1.7;white-space:pre-wrap;margin-bottom:28px;"></div>
           <a id="boraDetalleLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#3b7ddd;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;">Ver en BORA &#x2192;</a>
         </div>
       </div>
@@ -559,7 +560,7 @@ cargarYBuscar();
     }
   }
 
-  function abrirBoraDetalle(id) {
+  async function abrirBoraDetalle(id) {
     const t = (window._boraTiles || {})[id]; if (!t) return;
     document.getElementById('boraDetalleRazon').textContent = t.rs.nombre + ' — ' + t.rs.razon;
     document.getElementById('boraDetalleMeta').innerHTML =
@@ -567,8 +568,18 @@ cargarYBuscar();
       (t.it.seccion ? '<span style="padding:1px 8px;background:rgba(255,255,255,.08);border-radius:4px;">' + t.it.seccion + '</span>' : '');
     document.getElementById('boraDetalleTitulo').textContent = t.it.titulo || '';
     document.getElementById('boraDetalleLink').href = t.it.url || 'https://www.boletinoficial.gob.ar';
-    const d = document.getElementById('boraDetalle');
-    d.style.display = 'flex';
+    document.getElementById('boraDetalleCuerpo').style.color = 'rgba(255,255,255,.3)';
+    document.getElementById('boraDetalleCuerpo').textContent = 'Cargando contenido...';
+    document.getElementById('boraDetalle').style.display = 'flex';
+    try {
+      const r = await fetch(BORA_EDGE + '?boraDetail=' + encodeURIComponent(t.it.url || ''));
+      const data = r.ok ? await r.json() : {};
+      const cuerpo = document.getElementById('boraDetalleCuerpo');
+      cuerpo.style.color = '#c0c4d0';
+      cuerpo.textContent = data.texto || 'No se pudo cargar el contenido.';
+    } catch(e) {
+      document.getElementById('boraDetalleCuerpo').textContent = 'Error al cargar el contenido.';
+    }
   }
   function cerrarBoraDetalle() {
     document.getElementById('boraDetalle').style.display = 'none';
