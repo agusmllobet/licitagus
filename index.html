@@ -449,9 +449,15 @@ cargarYBuscar();
       <div class="shell-spacer"></div>
       <button onclick="buscarMencionesBORA()" id="btnBuscarBORA" style="padding:6px 16px;border-radius:8px;background:#3b7ddd;color:#fff;border:none;cursor:pointer;font-size:.85rem;font-weight:600;">Actualizar</button>
     </div>
+    <!-- BORA tabs -->
+    <div style="display:flex;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow-x:auto;scrollbar-width:none;">
+      <button id="boraTab-nuevas" onclick="setBORATab('nuevas')" style="padding:10px 20px;font-size:.85rem;color:#fff;font-weight:500;background:none;border:none;border-bottom:2px solid #fff;cursor:pointer;white-space:nowrap;">Nuevas</button>
+      <button id="boraTab-aceptadas" onclick="setBORATab('aceptadas')" style="padding:10px 20px;font-size:.85rem;color:rgba(255,255,255,.5);font-weight:400;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;">Aceptadas</button>
+      <button id="boraTab-rechazadas" onclick="setBORATab('rechazadas')" style="padding:10px 20px;font-size:.85rem;color:rgba(255,255,255,.5);font-weight:400;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;">Rechazadas</button>
+    </div>
     <div style="flex:1;overflow-y:auto;padding:16px;">
       <div id="boraMenciones" style="display:flex;flex-direction:column;gap:10px;max-width:900px;margin:0 auto;">
-        <p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Presiona Actualizar para buscar menciones recientes en el Boletin Oficial.</p>
+        <p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Cargando menciones...</p>
       </div>
     </div>
     <!-- Detalle BORA -->
@@ -521,6 +527,7 @@ cargarYBuscar();
 
   const BORA_EDGE = 'https://zimbmlxmjrsfcnqpjsqc.supabase.co/functions/v1/buscar-licitaciones';
   let boraVisible = false;
+  let boraTabActual = 'nuevas';
 
   function toggleBORA() { boraVisible ? cerrarBORA() : abrirBORA(); }
 
@@ -531,8 +538,7 @@ cargarYBuscar();
     document.querySelector('.nav-tabs').style.display = 'none';
     document.querySelector('.searchbar') && (document.querySelector('.searchbar').style.display = 'none');
     document.querySelector('.page') && (document.querySelector('.page').style.display = 'none');
-    // Only load from DB if tiles not yet loaded
-    if (!window._boraTiles || !Object.keys(window._boraTiles).length) {
+    if (!window._boraTilesAll || !Object.keys(window._boraTilesAll).length) {
       await cargarBORAdesdeDB();
     }
   }
@@ -544,6 +550,46 @@ cargarYBuscar();
     document.querySelector('.nav-tabs').style.display = '';
     document.querySelector('.searchbar') && (document.querySelector('.searchbar').style.display = '');
     document.querySelector('.page') && (document.querySelector('.page').style.display = '');
+  }
+
+  // --- Estado persistence (aceptada / rechazada / undefined=nueva) ---
+  function getBORAEstados() { return JSON.parse(localStorage.getItem('licitagus_bora_estados') || '{}'); }
+  function setBORAEstado(id, estado) {
+    const e = getBORAEstados();
+    if (estado === null) delete e[id]; else e[id] = estado;
+    localStorage.setItem('licitagus_bora_estados', JSON.stringify(e));
+  }
+
+  // --- Tabs ---
+  function setBORATab(tab) {
+    boraTabActual = tab;
+    ['nuevas','aceptadas','rechazadas'].forEach(function(t) {
+      const btn = document.getElementById('boraTab-' + t);
+      if (!btn) return;
+      const active = t === tab;
+      btn.style.color = active ? '#fff' : 'rgba(255,255,255,.5)';
+      btn.style.fontWeight = active ? '500' : '400';
+      btn.style.borderBottom = active ? '2px solid #fff' : '2px solid transparent';
+    });
+    renderBORATab();
+  }
+
+  function parseFechaARG(f) {
+    if (!f) return 0;
+    const m = f.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    return m ? new Date(+m[3], +m[2]-1, +m[1]).getTime() : 0;
+  }
+
+  function renderBORATab() {
+    const all = Object.values(window._boraTilesAll || {});
+    const estados = getBORAEstados();
+    let filtered;
+    if (boraTabActual === 'nuevas') filtered = all.filter(function(t) { return !estados[t.id]; });
+    else if (boraTabActual === 'aceptadas') filtered = all.filter(function(t) { return estados[t.id] === 'aceptada'; });
+    else filtered = all.filter(function(t) { return estados[t.id] === 'rechazada'; });
+    // Sort by date descending
+    filtered.sort(function(a, b) { return parseFechaARG(b.it.fecha) - parseFechaARG(a.it.fecha); });
+    renderBORATiles(filtered);
   }
 
   async function cargarBORAdesdeDB() {
@@ -558,14 +604,11 @@ cargarYBuscar();
         cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Sin menciones guardadas. Presiona Actualizar para buscar.</p>';
         return;
       }
-      const dismissed = getBORADismissed();
-      const saved = getBORASaved();
-      const tiles = items
-        .filter(function(item) { return !dismissed.includes(item.id); })
-        .map(function(item) {
-          return { id: item.id, rs: { nombre: item.razon_nombre, razon: item.razon_social }, it: { titulo: item.titulo, fecha: item.fecha, seccion: item.seccion, url: item.url }, isSaved: saved.includes(item.id) };
-        });
-      renderBORATiles(tiles);
+      window._boraTilesAll = {};
+      items.forEach(function(item) {
+        window._boraTilesAll[item.id] = { id: item.id, rs: { nombre: item.razon_nombre, razon: item.razon_social }, it: { titulo: item.titulo, fecha: item.fecha, seccion: item.seccion, url: item.url } };
+      });
+      renderBORATab();
     } catch(e) {
       console.warn('cargarBORAdesdeDB:', e);
       cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Error al cargar. Presiona Actualizar para buscar en vivo.</p>';
@@ -577,15 +620,21 @@ cargarYBuscar();
     window._boraTiles = {};
     tiles.forEach(function(t) { window._boraTiles[t.id] = t; });
     if (!tiles.length) {
-      cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Sin menciones recientes encontradas.</p>';
+      const msgs = { nuevas: 'Sin menciones nuevas. Revisá Aceptadas o Rechazadas.', aceptadas: 'No hay menciones aceptadas todavía.', rechazadas: 'No hay menciones rechazadas todavía.' };
+      cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">' + (msgs[boraTabActual] || 'Sin resultados.') + '</p>';
       return;
     }
+    const estados = getBORAEstados();
     cont.innerHTML = tiles.map(function(t) {
-      const id = t.id, rs = t.rs, it = t.it, isSaved = t.isSaved;
-      const savedStyle = isSaved ? 'border-color:#2e7d32;background:rgba(46,125,50,.12);' : 'border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.05);';
-      const tickBg = isSaved ? '#2e7d32' : 'rgba(255,255,255,.1)';
-      const tickColor = isSaved ? '#fff' : 'rgba(255,255,255,.5)';
-      return '<div id="bora-tile-' + id + '" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid;' + savedStyle + '">'
+      const id = t.id, rs = t.rs, it = t.it;
+      const estado = estados[id];
+      const borderColor = estado === 'aceptada' ? '#2e7d32' : estado === 'rechazada' ? '#7d2e2e' : 'rgba(255,255,255,.08)';
+      const bgColor = estado === 'aceptada' ? 'rgba(46,125,50,.1)' : estado === 'rechazada' ? 'rgba(125,46,46,.1)' : 'rgba(255,255,255,.05)';
+      const tickBg = estado === 'aceptada' ? '#2e7d32' : 'rgba(255,255,255,.1)';
+      const tickColor = estado === 'aceptada' ? '#fff' : 'rgba(255,255,255,.5)';
+      const xBg = estado === 'rechazada' ? '#7d2e2e' : 'rgba(255,255,255,.08)';
+      const xColor = estado === 'rechazada' ? '#fff' : 'rgba(255,255,255,.5)';
+      return '<div id="bora-tile-' + id + '" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid ' + borderColor + ';background:' + bgColor + ';">'
         + '<div style="flex:1;min-width:0;cursor:pointer;" onclick="abrirBoraDetalle(\'' + id + '\')">'
         + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">'
         + '<span style="font-size:.72rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">' + rs.nombre + '</span>'
@@ -596,32 +645,21 @@ cargarYBuscar();
         + '<span style="font-size:.75rem;color:rgba(255,255,255,.3);margin-top:3px;display:block;">Toca para ver resumen</span>'
         + '</div>'
         + '<div style="display:flex;gap:8px;flex-shrink:0;">'
-        + '<button onclick="toggleBORASave(\'' + id + '\',this)" title="Guardar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:' + tickBg + ';color:' + tickColor + ';display:flex;align-items:center;justify-content:center;">' + SVG_CHECK + '</button>'
-        + '<button onclick="removeBORATile(\'' + id + '\')" title="Descartar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;">' + SVG_X + '</button>'
+        + '<button onclick="setBORAEstadoTile(\'' + id + '\',\'aceptada\')" title="Aceptar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:' + tickBg + ';color:' + tickColor + ';display:flex;align-items:center;justify-content:center;">' + SVG_CHECK + '</button>'
+        + '<button onclick="setBORAEstadoTile(\'' + id + '\',\'rechazada\')" title="Rechazar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:' + xBg + ';color:' + xColor + ';display:flex;align-items:center;justify-content:center;">' + SVG_X + '</button>'
         + '</div></div>';
     }).join('');
   }
 
-  function getBORASaved(){ return JSON.parse(localStorage.getItem('licitagus_bora_saved')||'[]'); }
-  function getBORADismissed(){ return JSON.parse(localStorage.getItem('licitagus_bora_dismissed')||'[]'); }
-
-  function toggleBORASave(id, btn) {
-    const saved = getBORASaved();
-    const tile = document.getElementById('bora-tile-' + id);
-    if (saved.includes(id)) {
-      localStorage.setItem('licitagus_bora_saved', JSON.stringify(saved.filter(function(x){return x!==id;})));
-      if (tile) { tile.style.borderColor='rgba(255,255,255,.08)'; tile.style.background='rgba(255,255,255,.05)'; }
-      btn.innerHTML = SVG_CHECK; btn.style.background='rgba(255,255,255,.1)'; btn.style.color='rgba(255,255,255,.5)';
-    } else {
-      saved.push(id); localStorage.setItem('licitagus_bora_saved', JSON.stringify(saved));
-      const d = getBORADismissed().filter(function(x){return x!==id;}); localStorage.setItem('licitagus_bora_dismissed', JSON.stringify(d));
-      if (tile) { tile.style.borderColor='#2e7d32'; tile.style.background='rgba(46,125,50,.12)'; }
-      btn.innerHTML = SVG_CHECK; btn.style.background='#2e7d32'; btn.style.color='#fff';
-    }
+  function setBORAEstadoTile(id, nuevoEstado) {
+    const estadoActual = getBORAEstados()[id];
+    // Toggle: si ya tiene ese estado, vuelve a nueva
+    setBORAEstado(id, estadoActual === nuevoEstado ? null : nuevoEstado);
+    renderBORATab();
   }
 
   async function abrirBoraDetalle(id) {
-    const t = (window._boraTiles || {})[id]; if (!t) return;
+    const t = (window._boraTilesAll || {})[id]; if (!t) return;
     document.getElementById('boraDetalleRazon').textContent = t.rs.nombre + ' — ' + t.rs.razon;
     document.getElementById('boraDetalleMeta').innerHTML =
       (t.it.fecha ? '<span>' + t.it.fecha + '</span>' : '') +
@@ -632,7 +670,6 @@ cargarYBuscar();
     cuerpo.style.color = 'rgba(255,255,255,.3)';
     cuerpo.textContent = 'Generando resumen con IA...';
     document.getElementById('boraDetalle').style.display = 'flex';
-    // Use cached summary if available
     if (t._resumen) {
       cuerpo.style.color = '#c0c4d0';
       cuerpo.textContent = t._resumen;
@@ -642,7 +679,7 @@ cargarYBuscar();
       const r = await fetch(BORA_EDGE + '?boraDetail=' + encodeURIComponent(t.it.url || ''));
       const data = r.ok ? await r.json() : {};
       const resumen = data.resumen || 'No se pudo generar el resumen.';
-      t._resumen = resumen; // cache so revisiting is instant
+      t._resumen = resumen;
       cuerpo.style.color = '#c0c4d0';
       cuerpo.textContent = resumen;
     } catch(e) {
@@ -654,39 +691,28 @@ cargarYBuscar();
     document.getElementById('boraDetalle').style.display = 'none';
   }
 
-  function removeBORATile(id) {
-    const d = getBORADismissed(); d.push(id); localStorage.setItem('licitagus_bora_dismissed', JSON.stringify(d));
-    const s = getBORASaved().filter(function(x){return x!==id;}); localStorage.setItem('licitagus_bora_saved', JSON.stringify(s));
-    const tile = document.getElementById('bora-tile-' + id); if (tile) tile.remove();
-  }
-
   async function buscarMencionesBORA() {
     const cont = document.getElementById('boraMenciones');
     const btn = document.getElementById('btnBuscarBORA');
     btn.textContent = 'Buscando...'; btn.disabled = true;
     cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Consultando Boletin Oficial...</p>';
 
-    const dismissed = getBORADismissed();
-    const saved = getBORASaved();
-    const tiles = [];
-
+    window._boraTilesAll = window._boraTilesAll || {};
     for (const rs of RAZONES_SOCIALES) {
       try {
         const r = await fetch(BORA_EDGE + '?boraQ=' + encodeURIComponent(rs.razon));
         if (!r.ok) continue;
         const data = await r.json();
-        const items = (data.resultados || []).slice(0, 5);
-        for (const it of items) {
+        for (const it of (data.resultados || []).slice(0, 5)) {
           const raw = rs.razon + (it.titulo || '') + (it.id || '');
           const id = btoa(unescape(encodeURIComponent(raw))).replace(/[^a-zA-Z0-9]/g,'').substring(0, 24);
-          if (dismissed.includes(id)) continue;
-          tiles.push({id:id, rs:rs, it:it, isSaved:saved.includes(id)});
+          window._boraTilesAll[id] = { id, rs, it };
         }
       } catch(e) { console.warn('BORA', rs.nombre, e); }
     }
 
     btn.textContent = 'Actualizar'; btn.disabled = false;
-    renderBORATiles(tiles);
+    renderBORATab();
   }
   </script>
 </body>
