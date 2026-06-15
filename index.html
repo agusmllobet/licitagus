@@ -681,7 +681,9 @@ cargarYBuscar();
       (t.it.fecha ? '<span>' + t.it.fecha + '</span>' : '') +
       (t.it.seccion ? '<span style="padding:1px 8px;background:rgba(255,255,255,.08);border-radius:4px;">' + t.it.seccion + '</span>' : '');
     document.getElementById('boraDetalleTitulo').textContent = t.it.titulo || '';
-    const url = t.it.url || '';
+    const rawUrl = t.it.url || '';
+    // BORA SPA needs ?busqueda=1 to show the specific aviso (not the search form)
+    const url = rawUrl && !rawUrl.includes('busqueda=') ? rawUrl + (rawUrl.includes('?') ? '&' : '?') + 'busqueda=1&suplemento=1' : rawUrl;
     const linkEl = document.getElementById('boraDetalleLink');
     linkEl.href = url || 'https://www.boletinoficial.gob.ar';
     linkEl.style.opacity = url ? '1' : '0.4';
@@ -697,9 +699,10 @@ cargarYBuscar();
     cuerpo.textContent = 'Generando resumen con IA...';
     try {
       const params = new URLSearchParams({
-        boraDetail: url,
+        boraDetail: rawUrl,
         titulo: t.it.titulo || '',
         empresa: t.rs.nombre || '',
+        razon_social: t.rs.razon || '',
         seccion: t.it.seccion || '',
         fecha: t.it.fecha || '',
       });
