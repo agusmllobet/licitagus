@@ -486,7 +486,11 @@ cargarYBuscar();
         <div id="boraDetalleMeta" style="font-size:.8rem;color:rgba(255,255,255,.4);margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;"></div>
         <div id="boraDetalleTitulo" style="font-size:.95rem;font-weight:600;color:#e8eaf0;line-height:1.5;margin-bottom:16px;"></div>
         <div id="boraDetalleCuerpo" style="font-size:.88rem;color:#c0c4d0;line-height:1.7;white-space:pre-wrap;margin-bottom:28px;"></div>
-        <a id="boraDetalleLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#3b7ddd;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;">Ver en BORA &#x2192;</a>
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+          <a id="boraDetalleLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#3b7ddd;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;">Ver en BORA &#x2192;</a>
+          <button id="boraDetalleBtnAceptar" onclick="boraDetalleSetEstado('aceptada')" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;border:1.5px solid #28a745;background:transparent;color:#28a745;font-size:.9rem;font-weight:600;cursor:pointer;">&#x2713; Aceptar</button>
+          <button id="boraDetalleBtnRechazar" onclick="boraDetalleSetEstado('rechazada')" style="display:inline-flex;align-items:center;gap:6px;padding:10px 18px;border-radius:10px;border:1.5px solid #dc3545;background:transparent;color:#dc3545;font-size:.9rem;font-weight:600;cursor:pointer;">&#x2715; Rechazar</button>
+        </div>
       </div>
     </div>
 
@@ -689,6 +693,7 @@ cargarYBuscar();
 
   async function abrirBoraDetalle(id) {
     const t = (window._boraTilesAll || {})[id]; if (!t) return;
+    window._boraDetalleId = id;
     // Switch to detail view
     document.getElementById('boraHdrLista').style.display = 'none';
     document.getElementById('boraTabsBar').style.display = 'none';
@@ -698,6 +703,7 @@ cargarYBuscar();
     sec.style.display = '';
     sec.scrollTop = 0;
 
+    boraDetalleActualizarBotones(id);
     document.getElementById('boraDetalleRazon').textContent = t.rs.nombre + ' — ' + t.rs.razon;
     document.getElementById('boraDetalleMeta').innerHTML =
       (t.it.fecha ? '<span>' + t.it.fecha + '</span>' : '') +
@@ -738,6 +744,26 @@ cargarYBuscar();
       cuerpo.style.color = '#c0c4d0';
       cuerpo.textContent = 'Error al generar el resumen.';
     }
+  }
+  function boraDetalleSetEstado(nuevoEstado) {
+    if (!window._boraDetalleId) return;
+    const id = window._boraDetalleId;
+    const estados = getBORAEstados();
+    const actual = estados[id];
+    setBORAEstado(id, actual === nuevoEstado ? null : nuevoEstado);
+    boraDetalleActualizarBotones(id);
+    renderBORATab();
+  }
+  function boraDetalleActualizarBotones(id) {
+    const estados = getBORAEstados();
+    const estado = estados[id];
+    const btnA = document.getElementById('boraDetalleBtnAceptar');
+    const btnR = document.getElementById('boraDetalleBtnRechazar');
+    if (!btnA || !btnR) return;
+    btnA.style.background = estado === 'aceptada' ? '#28a745' : 'transparent';
+    btnA.style.color = estado === 'aceptada' ? '#fff' : '#28a745';
+    btnR.style.background = estado === 'rechazada' ? '#dc3545' : 'transparent';
+    btnR.style.color = estado === 'rechazada' ? '#fff' : '#dc3545';
   }
   function cerrarBoraDetalle() {
     document.getElementById('boraDetalleSeccion').style.display = 'none';
