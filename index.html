@@ -441,7 +441,9 @@ cargarYBuscar();
 
   <!-- BORA Menciones - vista completa -->
   <div id="boraPagina" style="display:none;position:fixed;inset:0;z-index:100;background:#0d1520;flex-direction:column;">
-    <div class="shell" style="flex-shrink:0;">
+
+    <!-- HEADER LISTA -->
+    <div id="boraHdrLista" class="shell" style="flex-shrink:0;">
       <button onclick="cerrarBORA()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:8px;padding:6px 12px;font-size:.85rem;font-weight:600;">
         <i class="ti ti-arrow-left"></i> Volver
       </button>
@@ -449,34 +451,40 @@ cargarYBuscar();
       <div class="shell-spacer"></div>
       <button onclick="buscarMencionesBORA()" id="btnBuscarBORA" style="padding:6px 16px;border-radius:8px;background:#3b7ddd;color:#fff;border:none;cursor:pointer;font-size:.85rem;font-weight:600;">Actualizar</button>
     </div>
-    <!-- BORA tabs -->
-    <div style="display:flex;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow-x:auto;scrollbar-width:none;">
+    <!-- HEADER DETALLE -->
+    <div id="boraHdrDetalle" class="shell" style="display:none;flex-shrink:0;">
+      <button onclick="cerrarBoraDetalle()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:8px;padding:6px 12px;font-size:.85rem;font-weight:600;">
+        <i class="ti ti-arrow-left"></i> Volver a lista
+      </button>
+      <span style="font-size:.95rem;font-weight:600;color:#fff;margin-left:4px;">Resumen</span>
+      <div class="shell-spacer"></div>
+    </div>
+
+    <!-- TABS (solo en vista lista) -->
+    <div id="boraTabsBar" style="display:flex;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow-x:auto;scrollbar-width:none;">
       <button id="boraTab-nuevas" onclick="setBORATab('nuevas')" style="padding:10px 20px;font-size:.85rem;color:#fff;font-weight:500;background:none;border:none;border-bottom:2px solid #fff;cursor:pointer;white-space:nowrap;">Nuevas</button>
       <button id="boraTab-aceptadas" onclick="setBORATab('aceptadas')" style="padding:10px 20px;font-size:.85rem;color:rgba(255,255,255,.5);font-weight:400;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;">Aceptadas</button>
       <button id="boraTab-rechazadas" onclick="setBORATab('rechazadas')" style="padding:10px 20px;font-size:.85rem;color:rgba(255,255,255,.5);font-weight:400;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;">Rechazadas</button>
     </div>
-    <div style="flex:1;overflow-y:auto;padding:16px;">
+
+    <!-- SECCION LISTA -->
+    <div id="boraListaSeccion" style="flex:1;overflow-y:auto;padding:16px;">
       <div id="boraMenciones" style="display:flex;flex-direction:column;gap:10px;max-width:900px;margin:0 auto;">
         <p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Cargando menciones...</p>
       </div>
     </div>
-    <!-- Detalle BORA -->
-    <div id="boraDetalle" style="display:none;position:absolute;inset:0;background:#0d1520;z-index:10;flex-direction:column;">
-      <div class="shell" style="flex-shrink:0;">
-        <button onclick="cerrarBoraDetalle()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:8px;padding:6px 12px;font-size:.85rem;font-weight:600;"><i class="ti ti-arrow-left"></i> Volver</button>
-        <span style="font-size:.95rem;font-weight:600;color:#fff;margin-left:4px;">Detalle</span>
-        <div class="shell-spacer"></div>
-      </div>
-      <div style="flex:1;overflow-y:auto;padding:24px 20px;">
-        <div style="max-width:700px;margin:0 auto;">
-          <div id="boraDetalleRazon" style="font-size:.75rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;"></div>
-          <div id="boraDetalleMeta" style="font-size:.8rem;color:rgba(255,255,255,.4);margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;"></div>
-          <div id="boraDetalleTitulo" style="font-size:.95rem;font-weight:600;color:#e8eaf0;line-height:1.5;margin-bottom:16px;"></div>
-          <div id="boraDetalleCuerpo" style="font-size:.88rem;color:#c0c4d0;line-height:1.7;white-space:pre-wrap;margin-bottom:28px;"></div>
-          <a id="boraDetalleLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#3b7ddd;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;">Ver en BORA &#x2192;</a>
-        </div>
+
+    <!-- SECCION DETALLE -->
+    <div id="boraDetalleSeccion" style="display:none;flex:1;overflow-y:auto;padding:24px 20px;">
+      <div style="max-width:700px;margin:0 auto;">
+        <div id="boraDetalleRazon" style="font-size:.75rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;"></div>
+        <div id="boraDetalleMeta" style="font-size:.8rem;color:rgba(255,255,255,.4);margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;"></div>
+        <div id="boraDetalleTitulo" style="font-size:.95rem;font-weight:600;color:#e8eaf0;line-height:1.5;margin-bottom:16px;"></div>
+        <div id="boraDetalleCuerpo" style="font-size:.88rem;color:#c0c4d0;line-height:1.7;white-space:pre-wrap;margin-bottom:28px;"></div>
+        <a id="boraDetalleLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#3b7ddd;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;">Ver en BORA &#x2192;</a>
       </div>
     </div>
+
   </div>
 
   <!-- Ideas bottom sheet -->
@@ -545,7 +553,6 @@ cargarYBuscar();
   function cerrarBORA() {
     boraVisible = false;
     document.getElementById('boraPagina').style.display = 'none';
-    document.getElementById('boraDetalle').style.display = 'none';
     document.getElementById('btnBORA').style.background = '';
     document.querySelector('.nav-tabs').style.display = '';
     document.querySelector('.searchbar') && (document.querySelector('.searchbar').style.display = '');
@@ -660,23 +667,43 @@ cargarYBuscar();
 
   async function abrirBoraDetalle(id) {
     const t = (window._boraTilesAll || {})[id]; if (!t) return;
+    // Switch to detail view
+    document.getElementById('boraHdrLista').style.display = 'none';
+    document.getElementById('boraTabsBar').style.display = 'none';
+    document.getElementById('boraListaSeccion').style.display = 'none';
+    document.getElementById('boraHdrDetalle').style.display = '';
+    const sec = document.getElementById('boraDetalleSeccion');
+    sec.style.display = '';
+    sec.scrollTop = 0;
+
     document.getElementById('boraDetalleRazon').textContent = t.rs.nombre + ' — ' + t.rs.razon;
     document.getElementById('boraDetalleMeta').innerHTML =
       (t.it.fecha ? '<span>' + t.it.fecha + '</span>' : '') +
       (t.it.seccion ? '<span style="padding:1px 8px;background:rgba(255,255,255,.08);border-radius:4px;">' + t.it.seccion + '</span>' : '');
     document.getElementById('boraDetalleTitulo').textContent = t.it.titulo || '';
-    document.getElementById('boraDetalleLink').href = t.it.url || 'https://www.boletinoficial.gob.ar';
+    const url = t.it.url || '';
+    const linkEl = document.getElementById('boraDetalleLink');
+    linkEl.href = url || 'https://www.boletinoficial.gob.ar';
+    linkEl.style.opacity = url ? '1' : '0.4';
+    linkEl.style.pointerEvents = url ? '' : 'none';
+
     const cuerpo = document.getElementById('boraDetalleCuerpo');
-    cuerpo.style.color = 'rgba(255,255,255,.3)';
-    cuerpo.textContent = 'Generando resumen con IA...';
-    document.getElementById('boraDetalle').style.display = 'flex';
     if (t._resumen) {
       cuerpo.style.color = '#c0c4d0';
       cuerpo.textContent = t._resumen;
       return;
     }
+    cuerpo.style.color = 'rgba(255,255,255,.3)';
+    cuerpo.textContent = 'Generando resumen con IA...';
     try {
-      const r = await fetch(BORA_EDGE + '?boraDetail=' + encodeURIComponent(t.it.url || ''));
+      const params = new URLSearchParams({
+        boraDetail: url,
+        titulo: t.it.titulo || '',
+        empresa: t.rs.nombre || '',
+        seccion: t.it.seccion || '',
+        fecha: t.it.fecha || '',
+      });
+      const r = await fetch(BORA_EDGE + '?' + params.toString());
       const data = r.ok ? await r.json() : {};
       const resumen = data.resumen || 'No se pudo generar el resumen.';
       t._resumen = resumen;
@@ -688,7 +715,11 @@ cargarYBuscar();
     }
   }
   function cerrarBoraDetalle() {
-    document.getElementById('boraDetalle').style.display = 'none';
+    document.getElementById('boraDetalleSeccion').style.display = 'none';
+    document.getElementById('boraHdrDetalle').style.display = 'none';
+    document.getElementById('boraHdrLista').style.display = '';
+    document.getElementById('boraTabsBar').style.display = 'flex';
+    document.getElementById('boraListaSeccion').style.display = '';
   }
 
   async function buscarMencionesBORA() {
