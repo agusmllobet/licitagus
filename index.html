@@ -461,10 +461,15 @@ cargarYBuscar();
     </div>
 
     <!-- TABS (solo en vista lista) -->
-    <div id="boraTabsBar" style="display:flex;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow-x:auto;scrollbar-width:none;">
+    <div id="boraTabsBar" style="display:flex;align-items:center;padding:0 16px;border-bottom:1px solid rgba(255,255,255,.08);flex-shrink:0;overflow-x:auto;scrollbar-width:none;">
       <button id="boraTab-nuevas" onclick="setBORATab('nuevas')" style="padding:10px 20px;font-size:.85rem;color:#fff;font-weight:500;background:none;border:none;border-bottom:2px solid #fff;cursor:pointer;white-space:nowrap;">Nuevas</button>
       <button id="boraTab-aceptadas" onclick="setBORATab('aceptadas')" style="padding:10px 20px;font-size:.85rem;color:rgba(255,255,255,.5);font-weight:400;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;">Aceptadas</button>
       <button id="boraTab-rechazadas" onclick="setBORATab('rechazadas')" style="padding:10px 20px;font-size:.85rem;color:rgba(255,255,255,.5);font-weight:400;background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;">Rechazadas</button>
+      <div style="margin-left:auto;padding-bottom:4px;">
+        <select id="boraSelectRS" onchange="setBORAFiltroRS(this.value)" style="background:#1a2535;color:#c0c4d0;border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:5px 10px;font-size:.8rem;cursor:pointer;outline:none;">
+          <option value="">Todas las empresas</option>
+        </select>
+      </div>
     </div>
 
     <!-- SECCION LISTA -->
@@ -536,12 +541,28 @@ cargarYBuscar();
   const BORA_EDGE = 'https://zimbmlxmjrsfcnqpjsqc.supabase.co/functions/v1/buscar-licitaciones';
   let boraVisible = false;
   let boraTabActual = 'nuevas';
+  let boraFiltroRS = '';
 
   function toggleBORA() { boraVisible ? cerrarBORA() : abrirBORA(); }
+
+  function setBORAFiltroRS(val) {
+    boraFiltroRS = val;
+    renderBORATab();
+  }
 
   async function abrirBORA() {
     boraVisible = true;
     document.getElementById('boraPagina').style.display = 'flex';
+    // Populate dropdown
+    const sel = document.getElementById('boraSelectRS');
+    if (sel.options.length === 1) {
+      RAZONES_SOCIALES.forEach(function(rs) {
+        const opt = document.createElement('option');
+        opt.value = rs.nombre;
+        opt.textContent = rs.nombre;
+        sel.appendChild(opt);
+      });
+    }
     document.getElementById('btnBORA').style.background = 'rgba(59,125,221,.3)';
     document.querySelector('.nav-tabs').style.display = 'none';
     document.querySelector('.searchbar') && (document.querySelector('.searchbar').style.display = 'none');
@@ -594,6 +615,7 @@ cargarYBuscar();
     if (boraTabActual === 'nuevas') filtered = all.filter(function(t) { return !estados[t.id]; });
     else if (boraTabActual === 'aceptadas') filtered = all.filter(function(t) { return estados[t.id] === 'aceptada'; });
     else filtered = all.filter(function(t) { return estados[t.id] === 'rechazada'; });
+    if (boraFiltroRS) filtered = filtered.filter(function(t) { return t.rs.nombre === boraFiltroRS; });
     // Sort by date descending
     filtered.sort(function(a, b) { return parseFechaARG(b.it.fecha) - parseFechaARG(a.it.fecha); });
     renderBORATiles(filtered);
