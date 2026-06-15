@@ -524,22 +524,82 @@ cargarYBuscar();
 
   function toggleBORA() { boraVisible ? cerrarBORA() : abrirBORA(); }
 
-  function abrirBORA() {
+  async function abrirBORA() {
     boraVisible = true;
     document.getElementById('boraPagina').style.display = 'flex';
     document.getElementById('btnBORA').style.background = 'rgba(59,125,221,.3)';
     document.querySelector('.nav-tabs').style.display = 'none';
     document.querySelector('.searchbar') && (document.querySelector('.searchbar').style.display = 'none');
     document.querySelector('.page') && (document.querySelector('.page').style.display = 'none');
-    buscarMencionesBORA();
+    // Only load from DB if tiles not yet loaded
+    if (!window._boraTiles || !Object.keys(window._boraTiles).length) {
+      await cargarBORAdesdeDB();
+    }
   }
   function cerrarBORA() {
     boraVisible = false;
     document.getElementById('boraPagina').style.display = 'none';
+    document.getElementById('boraDetalle').style.display = 'none';
     document.getElementById('btnBORA').style.background = '';
     document.querySelector('.nav-tabs').style.display = '';
     document.querySelector('.searchbar') && (document.querySelector('.searchbar').style.display = '');
     document.querySelector('.page') && (document.querySelector('.page').style.display = '');
+  }
+
+  async function cargarBORAdesdeDB() {
+    const cont = document.getElementById('boraMenciones');
+    cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Cargando menciones...</p>';
+    try {
+      const r = await fetch(BORA_EDGE + '?boraRecent=1');
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const data = await r.json();
+      const items = data.items || [];
+      if (!items.length) {
+        cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Sin menciones guardadas. Presiona Actualizar para buscar.</p>';
+        return;
+      }
+      const dismissed = getBORADismissed();
+      const saved = getBORASaved();
+      const tiles = items
+        .filter(function(item) { return !dismissed.includes(item.id); })
+        .map(function(item) {
+          return { id: item.id, rs: { nombre: item.razon_nombre, razon: item.razon_social }, it: { titulo: item.titulo, fecha: item.fecha, seccion: item.seccion, url: item.url }, isSaved: saved.includes(item.id) };
+        });
+      renderBORATiles(tiles);
+    } catch(e) {
+      console.warn('cargarBORAdesdeDB:', e);
+      cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Error al cargar. Presiona Actualizar para buscar en vivo.</p>';
+    }
+  }
+
+  function renderBORATiles(tiles) {
+    const cont = document.getElementById('boraMenciones');
+    window._boraTiles = {};
+    tiles.forEach(function(t) { window._boraTiles[t.id] = t; });
+    if (!tiles.length) {
+      cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Sin menciones recientes encontradas.</p>';
+      return;
+    }
+    cont.innerHTML = tiles.map(function(t) {
+      const id = t.id, rs = t.rs, it = t.it, isSaved = t.isSaved;
+      const savedStyle = isSaved ? 'border-color:#2e7d32;background:rgba(46,125,50,.12);' : 'border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.05);';
+      const tickBg = isSaved ? '#2e7d32' : 'rgba(255,255,255,.1)';
+      const tickColor = isSaved ? '#fff' : 'rgba(255,255,255,.5)';
+      return '<div id="bora-tile-' + id + '" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid;' + savedStyle + '">'
+        + '<div style="flex:1;min-width:0;cursor:pointer;" onclick="abrirBoraDetalle(\'' + id + '\')">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">'
+        + '<span style="font-size:.72rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">' + rs.nombre + '</span>'
+        + '<span style="font-size:.72rem;color:rgba(255,255,255,.4);white-space:nowrap;">' + (it.fecha || '') + '</span>'
+        + (it.seccion ? '<span style="font-size:.7rem;color:rgba(255,255,255,.28);padding:1px 6px;background:rgba(255,255,255,.07);border-radius:4px;">' + it.seccion + '</span>' : '')
+        + '</div>'
+        + '<span style="font-size:.9rem;color:#d0d4e0;line-height:1.4;display:block;">' + (it.titulo || '').replace(/</g,'&lt;').substring(0,300) + '</span>'
+        + '<span style="font-size:.75rem;color:rgba(255,255,255,.3);margin-top:3px;display:block;">Toca para ver resumen</span>'
+        + '</div>'
+        + '<div style="display:flex;gap:8px;flex-shrink:0;">'
+        + '<button onclick="toggleBORASave(\'' + id + '\',this)" title="Guardar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:' + tickBg + ';color:' + tickColor + ';display:flex;align-items:center;justify-content:center;">' + SVG_CHECK + '</button>'
+        + '<button onclick="removeBORATile(\'' + id + '\')" title="Descartar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;">' + SVG_X + '</button>'
+        + '</div></div>';
+    }).join('');
   }
 
   function getBORASaved(){ return JSON.parse(localStorage.getItem('licitagus_bora_saved')||'[]'); }
@@ -568,17 +628,26 @@ cargarYBuscar();
       (t.it.seccion ? '<span style="padding:1px 8px;background:rgba(255,255,255,.08);border-radius:4px;">' + t.it.seccion + '</span>' : '');
     document.getElementById('boraDetalleTitulo').textContent = t.it.titulo || '';
     document.getElementById('boraDetalleLink').href = t.it.url || 'https://www.boletinoficial.gob.ar';
-    document.getElementById('boraDetalleCuerpo').style.color = 'rgba(255,255,255,.3)';
-    document.getElementById('boraDetalleCuerpo').textContent = 'Cargando contenido...';
+    const cuerpo = document.getElementById('boraDetalleCuerpo');
+    cuerpo.style.color = 'rgba(255,255,255,.3)';
+    cuerpo.textContent = 'Generando resumen con IA...';
     document.getElementById('boraDetalle').style.display = 'flex';
+    // Use cached summary if available
+    if (t._resumen) {
+      cuerpo.style.color = '#c0c4d0';
+      cuerpo.textContent = t._resumen;
+      return;
+    }
     try {
       const r = await fetch(BORA_EDGE + '?boraDetail=' + encodeURIComponent(t.it.url || ''));
       const data = r.ok ? await r.json() : {};
-      const cuerpo = document.getElementById('boraDetalleCuerpo');
+      const resumen = data.resumen || 'No se pudo generar el resumen.';
+      t._resumen = resumen; // cache so revisiting is instant
       cuerpo.style.color = '#c0c4d0';
-      cuerpo.textContent = data.texto || 'No se pudo cargar el contenido.';
+      cuerpo.textContent = resumen;
     } catch(e) {
-      document.getElementById('boraDetalleCuerpo').textContent = 'Error al cargar el contenido.';
+      cuerpo.style.color = '#c0c4d0';
+      cuerpo.textContent = 'Error al generar el resumen.';
     }
   }
   function cerrarBoraDetalle() {
@@ -617,36 +686,7 @@ cargarYBuscar();
     }
 
     btn.textContent = 'Actualizar'; btn.disabled = false;
-
-    if (!tiles.length) {
-      cont.innerHTML = '<p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Sin menciones recientes encontradas.</p>';
-      return;
-    }
-
-    // store tile data for detail view
-    window._boraTiles = {};
-    tiles.forEach(function(t){ window._boraTiles[t.id] = t; });
-
-    cont.innerHTML = tiles.map(function(t) {
-      const id = t.id, rs = t.rs, it = t.it, isSaved = t.isSaved;
-      const savedStyle = isSaved ? 'border-color:#2e7d32;background:rgba(46,125,50,.12);' : 'border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.05);';
-      const tickBg = isSaved ? '#2e7d32' : 'rgba(255,255,255,.1)';
-      const tickColor = isSaved ? '#fff' : 'rgba(255,255,255,.5)';
-      return '<div id="bora-tile-' + id + '" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid;' + savedStyle + '">'
-        + '<div style="flex:1;min-width:0;cursor:pointer;" onclick="abrirBoraDetalle(\'' + id + '\')">'
-        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">'
-        + '<span style="font-size:.72rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">' + rs.nombre + '</span>'
-        + '<span style="font-size:.72rem;color:rgba(255,255,255,.4);white-space:nowrap;">' + (it.fecha || '') + '</span>'
-        + (it.seccion ? '<span style="font-size:.7rem;color:rgba(255,255,255,.28);padding:1px 6px;background:rgba(255,255,255,.07);border-radius:4px;">' + it.seccion + '</span>' : '')
-        + '</div>'
-        + '<span style="font-size:.9rem;color:#d0d4e0;line-height:1.4;display:block;">' + (it.titulo || '').replace(/</g,'&lt;').substring(0,300) + '</span>'
-        + '<span style="font-size:.75rem;color:rgba(255,255,255,.3);margin-top:3px;display:block;">Toca para ver detalle</span>'
-        + '</div>'
-        + '<div style="display:flex;gap:8px;flex-shrink:0;">'
-        + '<button onclick="toggleBORASave(\'' + id + '\',this)" title="Guardar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:' + tickBg + ';color:' + tickColor + ';display:flex;align-items:center;justify-content:center;">' + SVG_CHECK + '</button>'
-        + '<button onclick="removeBORATile(\'' + id + '\')" title="Descartar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;">' + SVG_X + '</button>'
-        + '</div></div>';
-    }).join('');
+    renderBORATiles(tiles);
   }
   </script>
 </body>
