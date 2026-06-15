@@ -232,9 +232,9 @@ const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 let allData = [];
 let activeFilter = 'nuevas';
 
-const SVG_CHECK = '<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+const SVG_CHECK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 const SVG_EYE = '<svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>';
-const SVG_X = '<svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
+const SVG_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
 
 async function cargarDesdeDB() {
   const { data, error } = await db.from('licitaciones').select('*').order('created_at', { ascending: false }).limit(100);
@@ -445,13 +445,29 @@ cargarYBuscar();
       <button onclick="cerrarBORA()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:8px;padding:6px 12px;font-size:.85rem;font-weight:600;">
         <i class="ti ti-arrow-left"></i> Volver
       </button>
-      <span style="font-size:.95rem;font-weight:600;color:#fff;margin-left:4px;">&#x1F4F0; Menciones en Boletin Oficial</span>
+      <span style="font-size:.95rem;font-weight:600;color:#fff;margin-left:4px;">&#x1F4F0; BORA</span>
       <div class="shell-spacer"></div>
       <button onclick="buscarMencionesBORA()" id="btnBuscarBORA" style="padding:6px 16px;border-radius:8px;background:#3b7ddd;color:#fff;border:none;cursor:pointer;font-size:.85rem;font-weight:600;">Actualizar</button>
     </div>
     <div style="flex:1;overflow-y:auto;padding:16px;">
       <div id="boraMenciones" style="display:flex;flex-direction:column;gap:10px;max-width:900px;margin:0 auto;">
         <p style="color:rgba(255,255,255,.4);font-size:.85rem;text-align:center;padding:48px 0;">Presiona Actualizar para buscar menciones recientes en el Boletin Oficial.</p>
+      </div>
+    </div>
+    <!-- Detalle BORA -->
+    <div id="boraDetalle" style="display:none;position:absolute;inset:0;background:#0d1520;z-index:10;flex-direction:column;">
+      <div class="shell" style="flex-shrink:0;">
+        <button onclick="cerrarBoraDetalle()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.1);border:none;cursor:pointer;color:#fff;border-radius:8px;padding:6px 12px;font-size:.85rem;font-weight:600;"><i class="ti ti-arrow-left"></i> Volver</button>
+        <span style="font-size:.95rem;font-weight:600;color:#fff;margin-left:4px;">Detalle</span>
+        <div class="shell-spacer"></div>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:24px 20px;">
+        <div style="max-width:700px;margin:0 auto;">
+          <div id="boraDetalleRazon" style="font-size:.75rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;"></div>
+          <div id="boraDetalleMeta" style="font-size:.8rem;color:rgba(255,255,255,.4);margin-bottom:16px;display:flex;gap:10px;flex-wrap:wrap;"></div>
+          <div id="boraDetalleTitulo" style="font-size:1rem;color:#e8eaf0;line-height:1.6;margin-bottom:28px;"></div>
+          <a id="boraDetalleLink" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:8px;padding:10px 20px;background:#3b7ddd;color:#fff;border-radius:10px;text-decoration:none;font-size:.9rem;font-weight:600;">Ver en BORA &#x2192;</a>
+        </div>
       </div>
     </div>
   </div>
@@ -543,6 +559,21 @@ cargarYBuscar();
     }
   }
 
+  function abrirBoraDetalle(id) {
+    const t = (window._boraTiles || {})[id]; if (!t) return;
+    document.getElementById('boraDetalleRazon').textContent = t.rs.nombre + ' — ' + t.rs.razon;
+    document.getElementById('boraDetalleMeta').innerHTML =
+      (t.it.fecha ? '<span>' + t.it.fecha + '</span>' : '') +
+      (t.it.seccion ? '<span style="padding:1px 8px;background:rgba(255,255,255,.08);border-radius:4px;">' + t.it.seccion + '</span>' : '');
+    document.getElementById('boraDetalleTitulo').textContent = t.it.titulo || '';
+    document.getElementById('boraDetalleLink').href = t.it.url || 'https://www.boletinoficial.gob.ar';
+    const d = document.getElementById('boraDetalle');
+    d.style.display = 'flex';
+  }
+  function cerrarBoraDetalle() {
+    document.getElementById('boraDetalle').style.display = 'none';
+  }
+
   function removeBORATile(id) {
     const d = getBORADismissed(); d.push(id); localStorage.setItem('licitagus_bora_dismissed', JSON.stringify(d));
     const s = getBORASaved().filter(function(x){return x!==id;}); localStorage.setItem('licitagus_bora_saved', JSON.stringify(s));
@@ -581,22 +612,25 @@ cargarYBuscar();
       return;
     }
 
+    // store tile data for detail view
+    window._boraTiles = {};
+    tiles.forEach(function(t){ window._boraTiles[t.id] = t; });
+
     cont.innerHTML = tiles.map(function(t) {
       const id = t.id, rs = t.rs, it = t.it, isSaved = t.isSaved;
       const savedStyle = isSaved ? 'border-color:#2e7d32;background:rgba(46,125,50,.12);' : 'border-color:rgba(255,255,255,.08);background:rgba(255,255,255,.05);';
       const tickBg = isSaved ? '#2e7d32' : 'rgba(255,255,255,.1)';
       const tickColor = isSaved ? '#fff' : 'rgba(255,255,255,.5)';
       return '<div id="bora-tile-' + id + '" style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid;' + savedStyle + '">'
-        + '<div style="flex:1;min-width:0;">'
+        + '<div style="flex:1;min-width:0;cursor:pointer;" onclick="abrirBoraDetalle(\'' + id + '\')">'
         + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap;">'
         + '<span style="font-size:.72rem;font-weight:700;color:#3b9ddd;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;">' + rs.nombre + '</span>'
         + '<span style="font-size:.72rem;color:rgba(255,255,255,.4);white-space:nowrap;">' + (it.fecha || '') + '</span>'
         + (it.seccion ? '<span style="font-size:.7rem;color:rgba(255,255,255,.28);padding:1px 6px;background:rgba(255,255,255,.07);border-radius:4px;">' + it.seccion + '</span>' : '')
         + '</div>'
-        + '<a href="' + (it.url || 'https://www.boletinoficial.gob.ar') + '" target="_blank" style="text-decoration:none;">'
         + '<span style="font-size:.9rem;color:#d0d4e0;line-height:1.4;display:block;">' + (it.titulo || '').replace(/</g,'&lt;').substring(0,300) + '</span>'
-        + '<span style="font-size:.75rem;color:#3b9ddd;margin-top:3px;display:block;">Ver en BORA &#x2192;</span>'
-        + '</a></div>'
+        + '<span style="font-size:.75rem;color:rgba(255,255,255,.3);margin-top:3px;display:block;">Toca para ver detalle</span>'
+        + '</div>'
         + '<div style="display:flex;gap:8px;flex-shrink:0;">'
         + '<button onclick="toggleBORASave(\'' + id + '\',this)" title="Guardar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:' + tickBg + ';color:' + tickColor + ';display:flex;align-items:center;justify-content:center;">' + SVG_CHECK + '</button>'
         + '<button onclick="removeBORATile(\'' + id + '\')" title="Descartar" style="width:36px;height:36px;border-radius:8px;border:none;cursor:pointer;background:rgba(255,255,255,.08);color:rgba(255,255,255,.5);display:flex;align-items:center;justify-content:center;">' + SVG_X + '</button>'
