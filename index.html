@@ -615,6 +615,15 @@ cargarYBuscar();
   function renderBORATab() {
     const all = Object.values(window._boraTilesAll || {});
     const estados = getBORAEstados();
+    const cNuevas = all.filter(function(t) { return !estados[t.id]; }).length;
+    const cAceptadas = all.filter(function(t) { return estados[t.id] === 'aceptada'; }).length;
+    const cRechazadas = all.filter(function(t) { return estados[t.id] === 'rechazada'; }).length;
+    var btnN = document.getElementById('boraTab-nuevas');
+    var btnA = document.getElementById('boraTab-aceptadas');
+    var btnR = document.getElementById('boraTab-rechazadas');
+    if (btnN) btnN.textContent = 'Nuevas (' + cNuevas + ')';
+    if (btnA) btnA.textContent = 'Aceptadas (' + cAceptadas + ')';
+    if (btnR) btnR.textContent = 'Rechazadas (' + cRechazadas + ')';
     let filtered;
     if (boraTabActual === 'nuevas') filtered = all.filter(function(t) { return !estados[t.id]; });
     else if (boraTabActual === 'aceptadas') filtered = all.filter(function(t) { return estados[t.id] === 'aceptada'; });
